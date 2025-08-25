@@ -10,8 +10,10 @@ import {
 import { Badge } from './ui/badge';
 import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, AlertTriangle, ListTodo, HelpCircle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, ListTodo } from 'lucide-react';
 import { format } from 'date-fns';
+import { TaskCalendar } from './TaskCalendar';
+
 
 type TaskStatus = 'completed-on-time' | 'completed-late' | 'incomplete-overdue' | 'pending';
 
@@ -30,6 +32,19 @@ function getTaskStatus(task: Task): TaskStatus {
   }
 
   if (task.completed && task.completionDate) {
+    // For recurring tasks, the due date is based on the completion date's day, not a fixed end date.
+    if (task.recurringDays && task.recurringDays.length > 0) {
+        const completionDate = new Date(task.completionDate);
+        dueDate = new Date(completionDate);
+         if (task.endTime) {
+            const [hours, minutes] = task.endTime.split(':');
+            dueDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 59, 999);
+        } else {
+            dueDate.setHours(23, 59, 59, 999);
+        }
+        return completionDate <= dueDate ? 'completed-on-time' : 'completed-late';
+    }
+    
     if (!dueDate) {
         return 'completed-on-time';
     }
@@ -133,6 +148,11 @@ export function TaskAnalyticsDialog({
                 <div className="font-semibold text-muted-foreground">Completed Date:</div>
                 <div className="font-medium">{task.completionDate ? format(new Date(task.completionDate), "PPP 'at' p") : 'Not completed'}</div>
             </div>
+
+            <div className="bg-background rounded-lg border">
+                <TaskCalendar task={task} />
+            </div>
+
              {task.description && 
                 <div>
                      <h4 className="font-semibold mb-2 text-sm">Description</h4>
