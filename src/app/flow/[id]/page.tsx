@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Download, Plus, ClipboardList } from 'lucide-react';
@@ -37,7 +37,8 @@ export default function FlowPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const flow = useMemo(() => getFlowById(params.id), [getFlowById, params.id]);
+  const resolvedParams = use(Promise.resolve(params));
+  const flow = useMemo(() => getFlowById(resolvedParams.id), [getFlowById, resolvedParams.id]);
 
   useEffect(() => {
     setIsClient(true);
