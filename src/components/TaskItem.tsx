@@ -1,7 +1,7 @@
 'use client';
 
 import { useContext, useState, useEffect } from 'react';
-import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio, Pencil, CheckCircle } from 'lucide-react';
+import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio, Pencil, CheckCircle, Repeat } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +26,7 @@ import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { SuggestResourcesDialog } from './SuggestResourcesDialog';
 import { Badge } from './ui/badge';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, isWithinInterval } from 'date-fns';
 import { TaskAnalyticsDialog } from './TaskAnalyticsDialog';
 import { EditTaskDialog } from './EditTaskDialog';
 
@@ -34,6 +34,8 @@ interface TaskItemProps {
   flowId: string;
   task: Task;
 }
+
+const WEEKDAY_MAP = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export function TaskItem({ flowId, task }: TaskItemProps) {
   const { updateTask, deleteTask } = useContext(FlowsContext);
@@ -45,60 +47,81 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
-    const getTaskDateTime = (dateString: string | undefined, timeString: string | undefined): Date | null => {
-        if (!dateString) return null;
-        
-        const date = new Date(dateString);
-        // Date from string might be UTC, adjust to local timezone for correct day
-        const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
-
-        if (timeString) {
-            const [hours, minutes] = timeString.split(':');
-            localDate.setHours(parseInt(hours, 10));
-            localDate.setMinutes(parseInt(minutes, 10));
-            localDate.setSeconds(0, 0);
-        } else {
-            // This case needs to be handled by the caller, e.g., set to start/end of day
-        }
-        return localDate;
-    }
-
     const checkStatus = () => {
       const now = new Date();
-
-      let startDateTime: Date | null = getTaskDateTime(task.startDate, task.startTime);
-      if(startDateTime && !task.startTime) {
-          startDateTime.setHours(0, 0, 0, 0);
-      }
-
-      // If there is no end date, the end date is the start date
-      let endDateTime: Date | null = getTaskDateTime(task.endDate || task.startDate, task.endTime);
-      if(endDateTime && !task.endTime) {
-          endDateTime.setHours(23, 59, 59, 999);
+      const today = now.getDay(); // Sunday - 0, Monday - 1, etc.
+  
+      // Task is not recurring, or today is not a recurring day, so no status.
+      if (!task.recurringDays || task.recurringDays.length === 0 || !task.recurringDays.includes(today)) {
+        setIsLive(false);
+        setIsOverdue(false);
+        setHasEnded(false);
+        setCountdown('');
+        return;
       }
       
-      const overdue = endDateTime ? !task.completed && now > endDateTime : false;
+      const startDate = task.startDate ? new Date(task.startDate) : null;
+      const endDate = task.endDate ? new Date(task.endDate) : null;
+
+      // Check if current date is within the overall start/end date range of the task
+      if (startDate && endDate) {
+          const dateRange = { start: new Date(startDate.setHours(0,0,0,0)), end: new Date(endDate.setHours(23,59,59,999)) };
+          if (!isWithinInterval(now, dateRange)) {
+            setIsLive(false);
+            setHasEnded(now > dateRange.end); // Task period has ended
+            return;
+          }
+      } else if (startDate) {
+          if (now < new Date(startDate.setHours(0,0,0,0))) {
+             setIsLive(false);
+             return;
+          }
+      } else if (endDate) {
+          if (now > new Date(endDate.setHours(23,59,59,999))) {
+              setIsLive(false);
+              setHasEnded(true);
+              return;
+          }
+      }
+  
+      // Construct today's start and end time
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      if (task.startTime) {
+        const [hours, minutes] = task.startTime.split(':');
+        todayStart.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+      }
+  
+      const todayEnd = new Date();
+      if (task.endTime) {
+        const [hours, minutes] = task.endTime.split(':');
+        todayEnd.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+      } else {
+        todayEnd.setHours(23, 59, 59, 999);
+      }
+      
+      const live = !task.completed && isWithinInterval(now, { start: todayStart, end: todayEnd });
+      setIsLive(live);
+  
+      const overdue = !task.completed && now > todayEnd;
       setIsOverdue(overdue);
       
-      const live = startDateTime && endDateTime ? !task.completed && now >= startDateTime && now <= endDateTime : false;
-      setIsLive(live);
-      
-      const ended = !!(endDateTime && task.completed && now > endDateTime);
+      const ended = !!(task.completed);
       setHasEnded(ended);
-
-      // Countdown status
-      if (startDateTime && now < startDateTime) {
-        setCountdown(formatDistanceToNow(startDateTime, { addSuffix: true }));
+  
+      // Countdown status for today
+      if (now < todayStart) {
+        setCountdown(formatDistanceToNow(todayStart, { addSuffix: true }));
       } else {
         setCountdown('');
       }
     };
-
+  
     checkStatus();
     const interval = setInterval(checkStatus, 1000); // Check every second for countdown
-
+  
     return () => clearInterval(interval);
-  }, [task.startDate, task.endDate, task.startTime, task.endTime, task.completed]);
+  }, [task.startDate, task.endDate, task.startTime, task.endTime, task.completed, task.recurringDays]);
 
 
   const handleCheckedChange = (checked: boolean) => {
@@ -128,6 +151,17 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
       return format(adjustedEndDate, "PPP");
     }
     return null;
+  }
+
+  const formatRecurringDays = () => {
+    if (!task.recurringDays || task.recurringDays.length === 0) return null;
+    if (task.recurringDays.length === 7) return 'Everyday';
+    
+    const sortedDays = [...task.recurringDays].sort();
+    if (JSON.stringify(sortedDays) === JSON.stringify([1,2,3,4,5])) return 'Weekdays';
+    if (JSON.stringify(sortedDays) === JSON.stringify([0,6])) return 'Weekends';
+
+    return sortedDays.map(day => WEEKDAY_MAP[day]).join(', ');
   }
 
   return (
@@ -164,6 +198,12 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     <span>{formatDateRange()}</span>
+                </div>
+            )}
+            {formatRecurringDays() && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Repeat className="h-3 w-3" />
+                    <span>{formatRecurringDays()}</span>
                 </div>
             )}
             {(task.startTime || task.endTime) && (

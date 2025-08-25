@@ -34,6 +34,7 @@ import { format } from 'date-fns';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import type { Task } from '@/lib/types';
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 
 const taskFormSchema = z.object({
   title: z.string().min(1, { message: 'Title is required' }),
@@ -42,6 +43,7 @@ const taskFormSchema = z.object({
   endDate: z.date().optional(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
+  recurringDays: z.array(z.number()).optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -51,6 +53,16 @@ interface EditTaskDialogProps {
   flowId: string;
   task?: Task; // Make task optional for adding new tasks
 }
+
+const WEEKDAYS = [
+    { label: 'S', value: 0 },
+    { label: 'M', value: 1 },
+    { label: 'T', value: 2 },
+    { label: 'W', value: 3 },
+    { label: 'T', value: 4 },
+    { label: 'F', value: 5 },
+    { label: 'S', value: 6 },
+]
 
 export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) {
   const [open, setOpen] = useState(false);
@@ -65,6 +77,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
       description: '',
       startTime: '',
       endTime: '',
+      recurringDays: [],
     },
   });
 
@@ -77,6 +90,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
         endDate: task.endDate ? new Date(task.endDate) : undefined,
         startTime: task.startTime,
         endTime: task.endTime,
+        recurringDays: task.recurringDays || [],
       });
     } else if (!task && open) {
        form.reset({
@@ -86,6 +100,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
         endDate: undefined,
         startTime: '',
         endTime: '',
+        recurringDays: [],
       });
     }
   }, [task, open, form]);
@@ -98,13 +113,14 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
       endDate: values.endDate?.toISOString(),
       startTime: values.startTime,
       endTime: values.endTime,
+      recurringDays: values.recurringDays,
     };
 
     if (isEditMode) {
       updateTask(flowId, task.id, taskData);
       toast({ title: 'Task Updated', description: `"${values.title}" has been updated.` });
     } else {
-      addTask(flowId, values.title, values.description || '', values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime);
+      addTask(flowId, values.title, values.description || '', values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime, values.recurringDays);
       toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
     }
 
@@ -271,6 +287,31 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                           )}
                         />
                       </div>
+                      <FormField
+                      control={form.control}
+                      name="recurringDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Repeat on</FormLabel>
+                          <FormControl>
+                             <ToggleGroup 
+                                type="multiple"
+                                variant="outline" 
+                                className="justify-start gap-2"
+                                value={field.value?.map(String) || []}
+                                onValueChange={(value) => field.onChange(value.map(Number))}
+                              >
+                                {WEEKDAYS.map(day => (
+                                    <ToggleGroupItem key={day.value} value={String(day.value)} aria-label={`Toggle ${day.label}`} className="w-10 h-10">
+                                        {day.label}
+                                    </ToggleGroupItem>
+                                ))}
+                            </ToggleGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
             </ScrollArea>

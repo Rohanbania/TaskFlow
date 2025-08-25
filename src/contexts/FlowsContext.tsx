@@ -10,7 +10,7 @@ interface FlowsContextType {
   updateFlow: (flowId: string, updates: Partial<Flow>) => void;
   deleteFlow: (flowId: string) => void;
   getFlowById: (flowId: string) => Flow | undefined;
-  addTask: (flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string) => void;
+  addTask: (flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, recurringDays?: number[]) => void;
   updateTask: (flowId: string, taskId: string, updates: Partial<Task>) => void;
   deleteTask: (flowId: string, taskId: string) => void;
   reorderTasks: (flowId: string, sourceIndex: number, destinationIndex: number) => void;
@@ -63,6 +63,7 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
         title: taskTitle,
         description: '',
         completed: false,
+        recurringDays: [],
       })),
     };
     setFlows((prevFlows) => [...prevFlows, newFlow]);
@@ -97,7 +98,7 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const addTask = useCallback((flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string) => {
+  const addTask = useCallback((flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, recurringDays?: number[]) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
       title: taskTitle,
@@ -107,6 +108,7 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
       endDate,
       startTime,
       endTime,
+      recurringDays,
     };
     updateFlowTasks(flowId, (tasks) => [...tasks, newTask]);
   }, [updateFlowTasks]);

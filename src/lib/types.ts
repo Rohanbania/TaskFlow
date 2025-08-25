@@ -8,6 +8,7 @@ export interface Task {
   startTime?: string;
   endTime?: string;
   completionDate?: string;
+  recurringDays?: number[]; // 0 for Sunday, 1 for Monday, etc.
 }
 
 export interface Flow {
