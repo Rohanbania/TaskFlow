@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useContext, type ReactNode } from 'react';
+import { useState, useContext, type ReactNode, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, CalendarIcon } from 'lucide-react';
+import { Plus, CalendarIcon, Save } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import type { Task } from '@/lib/types';
 
 const taskFormSchema = z.object({
   title: z.string().min(1, { message: 'Title is required' }),
@@ -45,25 +46,69 @@ const taskFormSchema = z.object({
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 
-interface AddTaskDialogProps {
+interface EditTaskDialogProps {
   children: ReactNode;
   flowId: string;
+  task?: Task; // Make task optional for adding new tasks
 }
 
-export function AddTaskDialog({ children, flowId }: AddTaskDialogProps) {
+export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) {
   const [open, setOpen] = useState(false);
-  const { addTask } = useContext(FlowsContext);
+  const { addTask, updateTask } = useContext(FlowsContext);
   const { toast } = useToast();
+  const isEditMode = !!task;
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
-    defaultValues: { title: '', description: '', startTime: '', endTime: '' },
+    defaultValues: {
+      title: '',
+      description: '',
+      startTime: '',
+      endTime: '',
+    },
   });
 
-  const handleAddTask = (values: TaskFormValues) => {
-    addTask(flowId, values.title, values.description || '', values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime);
+  useEffect(() => {
+    if (task && open) {
+      form.reset({
+        title: task.title,
+        description: task.description,
+        startDate: task.startDate ? new Date(task.startDate) : undefined,
+        endDate: task.endDate ? new Date(task.endDate) : undefined,
+        startTime: task.startTime,
+        endTime: task.endTime,
+      });
+    } else if (!task && open) {
+       form.reset({
+        title: '',
+        description: '',
+        startDate: undefined,
+        endDate: undefined,
+        startTime: '',
+        endTime: '',
+      });
+    }
+  }, [task, open, form]);
+
+  const handleFormSubmit = (values: TaskFormValues) => {
+    const taskData = {
+      title: values.title,
+      description: values.description || '',
+      startDate: values.startDate?.toISOString(),
+      endDate: values.endDate?.toISOString(),
+      startTime: values.startTime,
+      endTime: values.endTime,
+    };
+
+    if (isEditMode) {
+      updateTask(flowId, task.id, taskData);
+      toast({ title: 'Task Updated', description: `"${values.title}" has been updated.` });
+    } else {
+      addTask(flowId, values.title, values.description || '', values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime);
+      toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
+    }
+
     form.reset();
-    toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
     setOpen(false);
   };
 
@@ -72,13 +117,13 @@ export function AddTaskDialog({ children, flowId }: AddTaskDialogProps) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-headline text-2xl">Add New Task</DialogTitle>
+          <DialogTitle className="font-headline text-2xl">{isEditMode ? 'Edit Task' : 'Add New Task'}</DialogTitle>
           <DialogDescription>
-            Fill in the details for your new task below. Click save when you're done.
+             {isEditMode ? "Update the details for your task below." : "Fill in the details for your new task below. Click save when you're done."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleAddTask)}>
+          <form onSubmit={form.handleSubmit(handleFormSubmit)}>
             <ScrollArea className="h-[60vh] -mx-6 px-6">
                 <div className="space-y-6 py-2">
                   <div className="space-y-4">
@@ -234,8 +279,8 @@ export function AddTaskDialog({ children, flowId }: AddTaskDialogProps) {
                 Cancel
               </Button>
               <Button type="submit">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Task
+                 {isEditMode ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+                {isEditMode ? 'Save Changes' : 'Add Task'}
               </Button>
             </DialogFooter>
           </form>

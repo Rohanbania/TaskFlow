@@ -8,7 +8,7 @@ import { FlowsContext } from '@/contexts/FlowsContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskList } from '@/components/TaskList';
-import { AddTaskDialog } from '@/components/AddTaskDialog';
+import { EditTaskDialog } from '@/components/EditTaskDialog';
 
 export function FlowPageContent({ id }: { id: string }) {
   const { getFlowById, loading } = useContext(FlowsContext);
@@ -60,12 +60,12 @@ export function FlowPageContent({ id }: { id: string }) {
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
-            <AddTaskDialog flowId={flow.id}>
+            <EditTaskDialog flowId={flow.id}>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Task
               </Button>
-            </AddTaskDialog>
+            </EditTaskDialog>
           </div>
         </div>
       </header>

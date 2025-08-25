@@ -1,7 +1,7 @@
 'use client';
 
 import { useContext, useState, useEffect } from 'react';
-import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio } from 'lucide-react';
+import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio, Pencil } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +28,7 @@ import { SuggestResourcesDialog } from './SuggestResourcesDialog';
 import { Badge } from './ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
 import { TaskAnalyticsDialog } from './TaskAnalyticsDialog';
+import { EditTaskDialog } from './EditTaskDialog';
 
 interface TaskItemProps {
   flowId: string;
@@ -197,6 +198,12 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <EditTaskDialog flowId={flowId} task={task}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Task
+                </DropdownMenuItem>
+            </EditTaskDialog>
             <DropdownMenuItem onClick={() => setIsAnalyticsDialogOpen(true)}>
               <BarChart2 className="mr-2 h-4 w-4" />
               Analytics
