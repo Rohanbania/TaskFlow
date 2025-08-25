@@ -18,7 +18,6 @@ type TaskStatus = 'completed-on-time' | 'completed-late' | 'incomplete-overdue' 
 function getTaskStatus(task: Task): TaskStatus {
   const now = new Date();
   
-  // Create a specific due date object, or null if no dates are set
   let dueDate: Date | null = null;
   if (task.endDate || task.startDate) {
     dueDate = new Date(task.endDate || task.startDate!);
@@ -26,14 +25,12 @@ function getTaskStatus(task: Task): TaskStatus {
        const [hours, minutes] = task.endTime.split(':');
        dueDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 59, 999);
     } else {
-      // If no end time, the due date is the end of the day
       dueDate.setHours(23, 59, 59, 999);
     }
   }
 
   if (task.completed && task.completionDate) {
     if (!dueDate) {
-        // Completed but no due date, so considered on time
         return 'completed-on-time';
     }
     const completionDate = new Date(task.completionDate);
@@ -94,6 +91,18 @@ export function TaskAnalyticsDialog({
         return format(date, 'PPP');
     }
 
+    const getStartDate = () => {
+        if (!task.startDate) return 'Not set';
+        const date = new Date(task.startDate);
+        if (task.startTime) {
+            const [hours, minutes] = task.startTime.split(':');
+            date.setHours(parseInt(hours), parseInt(minutes));
+            return format(date, "PPP 'at' p");
+        }
+        return format(date, 'PPP');
+    }
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -115,6 +124,9 @@ export function TaskAnalyticsDialog({
             </div>
             
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm rounded-lg border p-4">
+                <div className="font-semibold text-muted-foreground">Start Date:</div>
+                <div className="font-medium">{getStartDate()}</div>
+
                 <div className="font-semibold text-muted-foreground">Due Date:</div>
                 <div className="font-medium">{getDueDate()}</div>
 
