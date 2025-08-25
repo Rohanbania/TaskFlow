@@ -298,7 +298,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                                 type="multiple"
                                 variant="outline" 
                                 className="justify-start gap-2"
-                                value={field.value?.map(String) || []}
+                                value={field.value?.map(String)}
                                 onValueChange={(value) => field.onChange(value.map(Number))}
                               >
                                 {WEEKDAYS.map(day => (
