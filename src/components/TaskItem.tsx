@@ -46,53 +46,41 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
 
   useEffect(() => {
     const getTaskDateTime = (dateString: string | undefined, timeString: string | undefined): Date | null => {
-      if (!dateString) return null;
-      
-      const date = new Date(dateString);
-      if (timeString) {
-        const [hours, minutes] = timeString.split(':');
-        date.setHours(parseInt(hours, 10));
-        date.setMinutes(parseInt(minutes, 10));
-        date.setSeconds(0, 0);
-      } else {
-        // If no time, set to start/end of day to avoid ambiguity
-        // Note: This part of logic is simplified because the main status check handles default times.
-      }
-      return date;
+        if (!dateString) return null;
+        
+        const date = new Date(dateString);
+        // Date from string might be UTC, adjust to local timezone for correct day
+        const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+
+        if (timeString) {
+            const [hours, minutes] = timeString.split(':');
+            localDate.setHours(parseInt(hours, 10));
+            localDate.setMinutes(parseInt(minutes, 10));
+            localDate.setSeconds(0, 0);
+        } else {
+            // This case needs to be handled by the caller, e.g., set to start/end of day
+        }
+        return localDate;
     }
 
     const checkStatus = () => {
       const now = new Date();
 
-      const startDate = task.startDate ? new Date(task.startDate) : null;
-      const endDate = task.endDate ? new Date(task.endDate) : startDate;
-
-      let startDateTime: Date | null = null;
-      if (startDate) {
-          startDateTime = new Date(startDate.getTime());
-          if (task.startTime) {
-              const [hours, minutes] = task.startTime.split(':');
-              startDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-          } else {
-              startDateTime.setHours(0, 0, 0, 0);
-          }
+      let startDateTime: Date | null = getTaskDateTime(task.startDate, task.startTime);
+      if(startDateTime && !task.startTime) {
+          startDateTime.setHours(0, 0, 0, 0);
       }
 
-      let endDateTime: Date | null = null;
-      if (endDate) {
-          endDateTime = new Date(endDate.getTime());
-          if (task.endTime) {
-              const [hours, minutes] = task.endTime.split(':');
-              endDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 59, 999);
-          } else {
-              endDateTime.setHours(23, 59, 59, 999);
-          }
+      // If there is no end date, the end date is the start date
+      let endDateTime: Date | null = getTaskDateTime(task.endDate || task.startDate, task.endTime);
+      if(endDateTime && !task.endTime) {
+          endDateTime.setHours(23, 59, 59, 999);
       }
       
-      const overdue = endDateTime && !task.completed && now > endDateTime;
+      const overdue = endDateTime ? !task.completed && now > endDateTime : false;
       setIsOverdue(overdue);
       
-      const live = startDateTime && endDateTime && !task.completed && now >= startDateTime && now <= endDateTime;
+      const live = startDateTime && endDateTime ? !task.completed && now >= startDateTime && now <= endDateTime : false;
       setIsLive(live);
       
       const ended = !!(endDateTime && task.completed && now > endDateTime);
@@ -122,16 +110,22 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     const endDate = task.endDate ? new Date(task.endDate) : null;
 
     if (startDate && endDate) {
-      if (startDate.toDateString() === endDate.toDateString()) {
-         return format(startDate, "PPP");
+      // Adjust for timezone offset to show correct local date
+      const adjustedStartDate = new Date(startDate.getTime() + startDate.getTimezoneOffset() * 60000);
+      const adjustedEndDate = new Date(endDate.getTime() + endDate.getTimezoneOffset() * 60000);
+
+      if (adjustedStartDate.toDateString() === adjustedEndDate.toDateString()) {
+         return format(adjustedStartDate, "PPP");
       }
-      return `${format(startDate, "PPP")} - ${format(endDate, "PPP")}`;
+      return `${format(adjustedStartDate, "PPP")} - ${format(adjustedEndDate, "PPP")}`;
     }
     if (startDate) {
-      return format(startDate, "PPP");
+      const adjustedStartDate = new Date(startDate.getTime() + startDate.getTimezoneOffset() * 60000);
+      return format(adjustedStartDate, "PPP");
     }
      if (endDate) {
-      return format(endDate, "PPP");
+      const adjustedEndDate = new Date(endDate.getTime() + endDate.getTimezoneOffset() * 60000);
+      return format(adjustedEndDate, "PPP");
     }
     return null;
   }
@@ -273,5 +267,3 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     </div>
   );
 }
-
-    
