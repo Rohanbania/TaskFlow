@@ -1,7 +1,7 @@
 'use client';
 
 import { useContext, useState, useEffect } from 'react';
-import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio, Pencil } from 'lucide-react';
+import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio, Pencil, CheckCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +41,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   const [isAnalyticsDialogOpen, setIsAnalyticsDialogOpen] = useState(false);
   const [isOverdue, setIsOverdue] = useState(false);
   const [isLive, setIsLive] = useState(false);
+  const [hasEnded, setHasEnded] = useState(false);
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
@@ -72,6 +73,12 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
         setIsOverdue(true);
       } else {
         setIsOverdue(false);
+      }
+
+      if (endDateTime && task.completed && now > endDateTime) {
+        setHasEnded(true);
+      } else {
+        setHasEnded(false);
       }
 
       if (startDateTime && now < startDateTime) {
@@ -165,6 +172,12 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                <Badge variant="destructive" className="gap-1 text-xs">
                 <AlertTriangle className="h-3 w-3" />
                 Overtime
+              </Badge>
+            )}
+            {hasEnded && (
+              <Badge variant="outline" className="gap-1 text-xs">
+                <CheckCircle className="h-3 w-3 text-green-600" />
+                Ended
               </Badge>
             )}
             {countdown && !task.completed && (
