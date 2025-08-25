@@ -1,7 +1,7 @@
 'use client';
 
-import { useContext, useState } from 'react';
-import { MoreVertical, Trash2, Wand2, Clock } from 'lucide-react';
+import { useContext, useState, useEffect } from 'react';
+import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +35,34 @@ interface TaskItemProps {
 export function TaskItem({ flowId, task }: TaskItemProps) {
   const { updateTask, deleteTask } = useContext(FlowsContext);
   const [isResourcesDialogOpen, setIsResourcesDialogOpen] = useState(false);
+  const [isOverdue, setIsOverdue] = useState(false);
+
+  useEffect(() => {
+    const checkOverdue = () => {
+      if (task.endTime && !task.completed) {
+        const now = new Date();
+        const endTimeParts = task.endTime.split(':');
+        const endTimeDate = new Date();
+        endTimeDate.setHours(parseInt(endTimeParts[0], 10));
+        endTimeDate.setMinutes(parseInt(endTimeParts[1], 10));
+        endTimeDate.setSeconds(0, 0);
+
+        if (now > endTimeDate) {
+          setIsOverdue(true);
+        } else {
+          setIsOverdue(false);
+        }
+      } else {
+        setIsOverdue(false);
+      }
+    };
+
+    checkOverdue();
+    const interval = setInterval(checkOverdue, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [task.endTime, task.completed]);
+
 
   const handleCheckedChange = (checked: boolean) => {
     updateTask(flowId, task.id, { completed: checked });
@@ -69,14 +97,22 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
               {task.description}
             </p>
           )}
-          {(task.startTime || task.endTime) && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>
-                {task.startTime || '...'} - {task.endTime || '...'}
-              </span>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {(task.startTime || task.endTime) && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>
+                  {task.startTime || '...'} - {task.endTime || '...'}
+                </span>
+              </div>
+            )}
+            {isOverdue && (
+               <Badge variant="destructive" className="gap-1 text-xs">
+                <AlertTriangle className="h-3 w-3" />
+                Overdue
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
