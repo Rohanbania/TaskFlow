@@ -9,7 +9,7 @@ interface FlowsContextType {
   addFlow: (title: string, generatedTasks?: string[]) => Flow;
   deleteFlow: (flowId: string) => void;
   getFlowById: (flowId: string) => Flow | undefined;
-  addTask: (flowId: string, taskTitle: string, taskDescription: string) => void;
+  addTask: (flowId: string, taskTitle: string, taskDescription: string, startTime?: string, endTime?: string) => void;
   updateTask: (flowId: string, taskId: string, updates: Partial<Task>) => void;
   deleteTask: (flowId: string, taskId: string) => void;
   reorderTasks: (flowId: string, sourceIndex: number, destinationIndex: number) => void;
@@ -87,12 +87,14 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const addTask = useCallback((flowId: string, taskTitle: string, taskDescription: string) => {
+  const addTask = useCallback((flowId: string, taskTitle: string, taskDescription: string, startTime?: string, endTime?: string) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
       title: taskTitle,
       description: taskDescription,
       completed: false,
+      startTime,
+      endTime,
     };
     updateFlowTasks(flowId, (tasks) => [...tasks, newTask]);
   }, [updateFlowTasks]);

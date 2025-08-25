@@ -27,6 +27,8 @@ import { Card, CardContent } from '@/components/ui/card';
 const taskFormSchema = z.object({
   title: z.string().min(1, { message: 'Title is required' }),
   description: z.string().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -48,12 +50,12 @@ export function FlowPageContent({ id }: { id: string }) {
   
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
-    defaultValues: { title: '', description: '' },
+    defaultValues: { title: '', description: '', startTime: '', endTime: '' },
   });
   
   const handleAddTask = (values: TaskFormValues) => {
     if (flow) {
-      addTask(flow.id, values.title, values.description || '');
+      addTask(flow.id, values.title, values.description || '', values.startTime, values.endTime);
       form.reset();
       toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
     }
@@ -139,6 +141,34 @@ export function FlowPageContent({ id }: { id: string }) {
                       </FormItem>
                     )}
                   />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="startTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Time</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="endTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Time</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <Button type="submit" className="w-full">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Task

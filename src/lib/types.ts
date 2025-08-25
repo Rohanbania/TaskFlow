@@ -3,6 +3,8 @@ export interface Task {
   title: string;
   description: string;
   completed: boolean;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface Flow {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useContext, useState } from 'react';
-import { MoreVertical, Trash2, Wand2 } from 'lucide-react';
+import { MoreVertical, Trash2, Wand2, Clock } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +25,7 @@ import { FlowsContext } from '@/contexts/FlowsContext';
 import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { SuggestResourcesDialog } from './SuggestResourcesDialog';
+import { Badge } from './ui/badge';
 
 interface TaskItemProps {
   flowId: string;
@@ -67,6 +68,14 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             )}>
               {task.description}
             </p>
+          )}
+          {(task.startTime || task.endTime) && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>
+                {task.startTime || '...'} - {task.endTime || '...'}
+              </span>
+            </div>
           )}
         </div>
       </div>
