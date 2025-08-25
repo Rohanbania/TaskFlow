@@ -69,16 +69,13 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     const checkStatus = () => {
       const now = new Date();
       
-      // Live status
-      const live = startDateTime && endDateTime && !task.completed && now >= startDateTime && now <= endDateTime;
-      setIsLive(live || false);
-      
-      // Overdue status
       const overdue = endDateTime && !task.completed && now > endDateTime;
       setIsOverdue(overdue);
       
-      // Ended status
-      const ended = endDateTime && task.completed && now > endDateTime;
+      const live = startDateTime && endDateTime && !task.completed && now >= startDateTime && now <= endDateTime;
+      setIsLive(live);
+      
+      const ended = !!(endDateTime && task.completed && now > endDateTime);
       setHasEnded(ended);
 
       // Countdown status
