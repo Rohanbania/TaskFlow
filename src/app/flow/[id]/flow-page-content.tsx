@@ -3,7 +3,7 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Plus, ClipboardList, CalendarIcon, BarChart2 } from 'lucide-react';
+import { ArrowLeft, Download, Plus, ClipboardList, CalendarIcon } from 'lucide-react';
 import { FlowsContext } from '@/contexts/FlowsContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -100,12 +100,6 @@ export function FlowPageContent({ id }: { id: string }) {
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <h1 className="text-4xl font-bold font-headline">{flow.title}</h1>
           <div className="flex gap-2">
-            <Button variant="outline" asChild>
-                <Link href={`/flow/${id}/analytics`}>
-                  <BarChart2 className="mr-2 h-4 w-4" />
-                  Analytics
-                </Link>
-              </Button>
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               Export

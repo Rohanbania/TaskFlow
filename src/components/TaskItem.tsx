@@ -1,7 +1,7 @@
 'use client';
 
 import { useContext, useState, useEffect } from 'react';
-import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer } from 'lucide-react';
+import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { SuggestResourcesDialog } from './SuggestResourcesDialog';
 import { Badge } from './ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
+import { TaskAnalyticsDialog } from './TaskAnalyticsDialog';
 
 interface TaskItemProps {
   flowId: string;
@@ -36,6 +37,7 @@ interface TaskItemProps {
 export function TaskItem({ flowId, task }: TaskItemProps) {
   const { updateTask, deleteTask } = useContext(FlowsContext);
   const [isResourcesDialogOpen, setIsResourcesDialogOpen] = useState(false);
+  const [isAnalyticsDialogOpen, setIsAnalyticsDialogOpen] = useState(false);
   const [isOverdue, setIsOverdue] = useState(false);
   const [countdown, setCountdown] = useState('');
 
@@ -166,6 +168,12 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
         onOpenChange={setIsResourcesDialogOpen}
         taskDescription={task.title}
       />
+      
+       <TaskAnalyticsDialog
+        open={isAnalyticsDialogOpen}
+        onOpenChange={setIsAnalyticsDialogOpen}
+        task={task}
+      />
 
       <AlertDialog>
         <DropdownMenu>
@@ -176,6 +184,10 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setIsAnalyticsDialogOpen(true)}>
+              <BarChart2 className="mr-2 h-4 w-4" />
+              Analytics
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setIsResourcesDialogOpen(true)}>
               <Wand2 className="mr-2 h-4 w-4" />
               Suggest Resources
