@@ -1,7 +1,7 @@
 'use client';
 
 import { useContext, useState, useEffect } from 'react';
-import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio, Pencil, CheckCircle, Repeat } from 'lucide-react';
+import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio, Pencil, CheckCircle, Repeat, Pin } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +26,7 @@ import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { SuggestResourcesDialog } from './SuggestResourcesDialog';
 import { Badge } from './ui/badge';
-import { format, formatDistanceToNow, isWithinInterval } from 'date-fns';
+import { format, formatDistanceToNow, isWithinInterval, isToday as isTodayFns } from 'date-fns';
 import { TaskAnalyticsDialog } from './TaskAnalyticsDialog';
 import { EditTaskDialog } from './EditTaskDialog';
 
@@ -43,17 +43,46 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   const [isAnalyticsDialogOpen, setIsAnalyticsDialogOpen] = useState(false);
   const [isOverdue, setIsOverdue] = useState(false);
   const [isLive, setIsLive] = useState(false);
+  const [isToday, setIsToday] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
     const checkStatus = () => {
         const now = new Date();
-        const today = now.getDay();
-        const isRecurringToday = task.recurringDays && task.recurringDays.length > 0 && task.recurringDays.includes(today);
+        
+        const taskStartDate = task.startDate ? new Date(task.startDate) : null;
+        if(taskStartDate) taskStartDate.setHours(0,0,0,0);
 
-        // If it's a recurring task, it must be a scheduled day.
-        if ((task.recurringDays && task.recurringDays.length > 0) && !isRecurringToday) {
+        const taskEndDate = task.endDate ? new Date(task.endDate) : null;
+        if(taskEndDate) taskEndDate.setHours(23,59,59,999);
+
+        let isScheduledForToday = false;
+        const todayWeekday = now.getDay();
+        
+        if (task.recurringDays && task.recurringDays.length > 0) {
+            if (task.recurringDays.includes(todayWeekday)) {
+                // It's a recurring day. Check if it's within the global start/end date range.
+                if ((!taskStartDate || now >= taskStartDate) && (!taskEndDate || now <= taskEndDate)) {
+                    isScheduledForToday = true;
+                }
+            }
+        } else if (taskStartDate) {
+            // Not recurring, check if today is within the date range for one-off tasks.
+            const singleTaskEndDate = taskEndDate || taskStartDate;
+            if (isWithinInterval(now, { start: taskStartDate, end: singleTaskEndDate })) {
+                isScheduledForToday = true;
+            }
+        } else {
+             // No start date, no recurring days. Assume it's an ad-hoc task valid for today if created today.
+             // This logic can be tricky. For now, we consider it not scheduled unless dates are provided.
+             isScheduledForToday = true; // Let's assume tasks without dates are always "current"
+        }
+        setIsToday(isScheduledForToday && !task.completed);
+
+
+        // If it's not scheduled for today, no need to calculate live/overdue status
+        if (!isScheduledForToday) {
             setIsLive(false);
             setIsOverdue(false);
             setHasEnded(false);
@@ -61,31 +90,15 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             return;
         }
 
-        const taskStartDate = task.startDate ? new Date(task.startDate) : null;
-        if(taskStartDate) taskStartDate.setHours(0,0,0,0);
-
-        const taskEndDate = task.endDate ? new Date(task.endDate) : null;
-        if(taskEndDate) taskEndDate.setHours(23,59,59,999);
-
-        // Check if task is outside its master date range
-        if ((taskStartDate && now < taskStartDate) || (taskEndDate && now > taskEndDate)) {
-             setIsLive(false);
-             // set as overdue if it has passed the end date and is not complete
-             setIsOverdue(!!taskEndDate && now > taskEndDate && !task.completed);
-             setHasEnded(!!taskEndDate && now > taskEndDate);
-             setCountdown('');
-             return;
-        }
-
         const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0); // Default to start of the day
+        todayStart.setHours(0, 0, 0, 0); 
         if (task.startTime) {
             const [hours, minutes] = task.startTime.split(':');
             todayStart.setHours(parseInt(hours, 10), parseInt(minutes, 10));
         }
 
         const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999); // Default to end of the day
+        todayEnd.setHours(23, 59, 59, 999);
         if (task.endTime) {
             const [hours, minutes] = task.endTime.split(':');
             todayEnd.setHours(parseInt(hours, 10), parseInt(minutes, 10));
@@ -201,6 +214,12 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                   {task.startTime || '...'} - {task.endTime || '...'}
                 </span>
               </div>
+            )}
+            {isToday && !isLive && (
+                <Badge variant="outline" className="gap-1 text-xs border-blue-500 text-blue-600">
+                    <Pin className="h-3 w-3" />
+                    Today
+                </Badge>
             )}
             {isLive && (
               <Badge variant="default" className="gap-1 text-xs animate-pulse bg-green-600">
