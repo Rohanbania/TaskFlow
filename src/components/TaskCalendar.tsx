@@ -25,6 +25,9 @@ export function TaskCalendar({ task }: TaskCalendarProps) {
   const startingDayOfMonth = getDay(startOfMonth(calendarMonth));
 
   const getDayStatus = (day: Date): DayStatus => {
+    // If the day is today, its primary status is 'today'.
+    if (isToday(day)) return 'today';
+
     const dayOfWeek = getDay(day);
 
     const isRecurringToday = task.recurringDays && task.recurringDays.length > 0 && task.recurringDays.includes(dayOfWeek);
@@ -34,7 +37,17 @@ export function TaskCalendar({ task }: TaskCalendarProps) {
         end: new Date(task.endDate)
     }) : true;
     
-    const isScheduled = isWithinDateRange && (task.recurringDays?.length ? isRecurringToday : isSameDay(new Date(task.startDate!), day) || isWithinInterval(day, {start: new Date(task.startDate!), end: new Date(task.endDate!)}))
+    let isScheduled = false;
+    if (task.startDate && !task.recurringDays?.length) {
+        const start = new Date(task.startDate);
+        start.setHours(0,0,0,0);
+        const end = task.endDate ? new Date(task.endDate) : start;
+        end.setHours(23,59,59,999);
+        isScheduled = isWithinInterval(day, { start, end });
+    } else if (task.recurringDays?.length) {
+        isScheduled = isWithinDateRange && isRecurringToday;
+    }
+
 
     const completionDate = task.completionDate ? new Date(task.completionDate) : null;
 
@@ -49,19 +62,18 @@ export function TaskCalendar({ task }: TaskCalendarProps) {
         return completionDate <= dueDate ? 'completed-on-time' : 'completed-late';
     }
 
-    if(isScheduled && isPast(day) && !isToday(day)) {
+    if(isScheduled && isPast(day)) {
         return 'missed'
     }
 
     if (isScheduled) return 'scheduled';
-    if(isToday(day)) return 'today';
 
     return 'none';
   };
 
   const statusStyles: Record<DayStatus, string> = {
     'none': 'bg-white text-black',
-    'today': 'bg-blue-100 text-blue-800',
+    'today': 'bg-blue-100 text-blue-800 border-2 border-blue-500',
     'scheduled': 'bg-gray-200 text-gray-700',
     'completed-on-time': 'bg-green-200 text-green-800 font-bold',
     'completed-late': 'bg-yellow-200 text-yellow-800 font-bold',
@@ -73,7 +85,7 @@ export function TaskCalendar({ task }: TaskCalendarProps) {
     'Completed On Time': 'bg-green-200',
     'Completed Late': 'bg-yellow-200',
     'Missed': 'bg-red-200',
-    'Today': 'bg-blue-100',
+    'Today': 'bg-blue-100 border-2 border-blue-500',
   }
 
   return (
@@ -111,7 +123,7 @@ export function TaskCalendar({ task }: TaskCalendarProps) {
         </div>
       </div>
       
-      <div className="flex flex-wrap gap-2 text-xs mt-4">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs mt-4">
           {Object.entries(statusLegend).map(([label, colorClass]) => (
             <div key={label} className="flex items-center gap-1.5">
                 <div className={cn("w-3 h-3 rounded-full", colorClass)} />
