@@ -10,24 +10,34 @@ import {
 import { Badge } from './ui/badge';
 import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, AlertTriangle, ListTodo } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, ListTodo, HelpCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 type TaskStatus = 'completed-on-time' | 'completed-late' | 'incomplete-overdue' | 'pending';
 
 function getTaskStatus(task: Task): TaskStatus {
   const now = new Date();
-  const dueDate = task.endDate ? new Date(task.endDate) : (task.startDate ? new Date(task.startDate) : null);
-  if (dueDate && task.endTime) {
-     const [hours, minutes] = task.endTime.split(':');
-     dueDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 59, 999);
-  } else if (dueDate) {
-    dueDate.setHours(23, 59, 59, 999);
+  
+  // Create a specific due date object, or null if no dates are set
+  let dueDate: Date | null = null;
+  if (task.endDate || task.startDate) {
+    dueDate = new Date(task.endDate || task.startDate!);
+    if (task.endTime) {
+       const [hours, minutes] = task.endTime.split(':');
+       dueDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 59, 999);
+    } else {
+      // If no end time, the due date is the end of the day
+      dueDate.setHours(23, 59, 59, 999);
+    }
   }
 
   if (task.completed && task.completionDate) {
+    if (!dueDate) {
+        // Completed but no due date, so considered on time
+        return 'completed-on-time';
+    }
     const completionDate = new Date(task.completionDate);
-    return completionDate <= dueDate! ? 'completed-on-time' : 'completed-late';
+    return completionDate <= dueDate ? 'completed-on-time' : 'completed-late';
   }
 
   if (dueDate && now > dueDate) {
@@ -50,18 +60,27 @@ export function TaskAnalyticsDialog({
 }: TaskAnalyticsDialogProps) {
     const status = getTaskStatus(task);
 
-    const statusText: Record<TaskStatus, string> = {
-        'completed-on-time': 'Completed On Time',
-        'completed-late': 'Completed Late',
-        'incomplete-overdue': 'Overtime',
-        'pending': 'Pending',
-    }
-
-    const statusIcons: Record<TaskStatus, React.ReactNode> = {
-        'completed-on-time': <CheckCircle2 className="h-5 w-5 text-green-500" />,
-        'completed-late': <AlertTriangle className="h-5 w-5 text-yellow-500" />,
-        'incomplete-overdue': <AlertTriangle className="h-5 w-5 text-red-500" />,
-        'pending': <ListTodo className="h-5 w-5 text-gray-500" />
+    const statusInfo: Record<TaskStatus, {text: string, icon: React.ReactNode, className: string}> = {
+        'completed-on-time': { 
+            text: 'Completed On Time',
+            icon: <CheckCircle2 className="h-5 w-5" />,
+            className: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700'
+        },
+        'completed-late': {
+            text: 'Completed Late',
+            icon: <AlertTriangle className="h-5 w-5" />,
+            className: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700'
+        },
+        'incomplete-overdue': {
+            text: 'Overtime',
+            icon: <AlertTriangle className="h-5 w-5" />,
+            className: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700'
+        },
+        'pending': {
+            text: 'Pending',
+            icon: <ListTodo className="h-5 w-5" />,
+            className: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800/50 dark:text-gray-300 dark:border-gray-600'
+        }
     }
     
     const getDueDate = () => {
@@ -85,24 +104,22 @@ export function TaskAnalyticsDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="mt-4 space-y-6">
-            <div className="flex items-center gap-4">
-                {statusIcons[status]}
+            <div className="flex items-center justify-center">
                 <Badge variant="outline" className={cn(
-                    "text-lg",
-                    status === 'completed-on-time' && 'text-green-600 border-green-600',
-                    status === 'completed-late' && 'text-yellow-600 border-yellow-600',
-                    status === 'incomplete-overdue' && 'text-red-600 border-red-600',
+                    "text-base font-semibold gap-2 px-4 py-2 border-2",
+                    statusInfo[status].className
                 )}>
-                    {statusText[status]}
+                    {statusInfo[status].icon}
+                    <span>{statusInfo[status].text}</span>
                 </Badge>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="font-semibold">Due Date:</div>
-                <div>{getDueDate()}</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm rounded-lg border p-4">
+                <div className="font-semibold text-muted-foreground">Due Date:</div>
+                <div className="font-medium">{getDueDate()}</div>
 
-                <div className="font-semibold">Completed Date:</div>
-                <div>{task.completionDate ? format(new Date(task.completionDate), "PPP 'at' p") : 'Not completed'}</div>
+                <div className="font-semibold text-muted-foreground">Completed Date:</div>
+                <div className="font-medium">{task.completionDate ? format(new Date(task.completionDate), "PPP 'at' p") : 'Not completed'}</div>
             </div>
              {task.description && 
                 <div>
