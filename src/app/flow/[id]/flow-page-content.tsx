@@ -1,21 +1,29 @@
 'use client';
 
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Plus, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Download, Plus, ClipboardList, Loader2 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+
 import { FlowsContext } from '@/contexts/FlowsContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskList } from '@/components/TaskList';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
+import { TaskCalendar } from '@/components/TaskCalendar';
+import type { Task } from '@/lib/types';
+
 
 export function FlowPageContent({ id }: { id: string }) {
   const { getFlowById, loading } = useContext(FlowsContext);
   const [isClient, setIsClient] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const router = useRouter();
-
+  
   const flow = useMemo(() => getFlowById(id), [getFlowById, id]);
+  const calendarRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -23,17 +31,52 @@ export function FlowPageContent({ id }: { id: string }) {
       router.replace('/');
     }
   }, [flow, loading, router]);
+  
+  useEffect(() => {
+    if (flow?.tasks) {
+      calendarRefs.current = calendarRefs.current.slice(0, flow.tasks.length);
+    }
+  }, [flow?.tasks]);
 
-  const handleExport = () => {
-    if (!flow) return;
-    const content = `${flow.title}\n\n${flow.tasks.map(t => `- [${t.completed ? 'x' : ' '}] ${t.title}${t.description ? `\n  ${t.description}` : ''}`).join('\n')}`;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${flow.title.replace(/\s+/g, '_')}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleExport = async () => {
+     if (!flow) return;
+    setIsExporting(true);
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const contentWidth = pageWidth - margin * 2;
+    
+    // Add Flow Title
+    doc.setFontSize(22);
+    doc.text(flow.title, margin, margin + 5);
+
+    let yPosition = margin + 20;
+
+    for (let i = 0; i < flow.tasks.length; i++) {
+        const task = flow.tasks[i];
+        const calendarElement = calendarRefs.current[i];
+
+        if (calendarElement) {
+            const canvas = await html2canvas(calendarElement, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            
+            const imgWidth = contentWidth;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            if (yPosition + imgHeight > pageHeight - margin) {
+                doc.addPage();
+                yPosition = margin;
+            }
+            
+            doc.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+            yPosition += imgHeight + 10;
+        }
+    }
+
+    doc.save(`${flow.title.replace(/\s+/g, '_')}_report.pdf`);
+    setIsExporting(false);
   };
   
   if (!isClient || loading) {
@@ -56,9 +99,9 @@ export function FlowPageContent({ id }: { id: string }) {
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <h1 className="text-4xl font-bold font-headline">{flow.title}</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
+            <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+              {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+              {isExporting ? 'Exporting...' : 'Export PDF'}
             </Button>
             <EditTaskDialog flowId={flow.id}>
               <Button>
@@ -79,6 +122,15 @@ export function FlowPageContent({ id }: { id: string }) {
             <TaskList flowId={flow.id} tasks={flow.tasks} />
         </div>
       </main>
+
+       {/* Hidden calendars for PDF export */}
+      <div className="pointer-events-none absolute -left-[9999px] top-auto opacity-0">
+        {flow.tasks.map((task, index) => (
+          <div key={task.id} ref={el => calendarRefs.current[index] = el} className="w-[800px] p-4 bg-white">
+            <TaskCalendar task={task} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
