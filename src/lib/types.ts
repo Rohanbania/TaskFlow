@@ -3,6 +3,7 @@ export interface Task {
   title: string;
   description: string;
   completed: boolean;
+  date?: string;
   startTime?: string;
   endTime?: string;
 }

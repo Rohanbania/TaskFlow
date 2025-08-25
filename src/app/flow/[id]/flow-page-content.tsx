@@ -3,7 +3,7 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Plus, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Download, Plus, ClipboardList, CalendarIcon } from 'lucide-react';
 import { FlowsContext } from '@/contexts/FlowsContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,10 +23,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Card, CardContent } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const taskFormSchema = z.object({
   title: z.string().min(1, { message: 'Title is required' }),
   description: z.string().optional(),
+  date: z.date().optional(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
 });
@@ -55,7 +60,7 @@ export function FlowPageContent({ id }: { id: string }) {
   
   const handleAddTask = (values: TaskFormValues) => {
     if (flow) {
-      addTask(flow.id, values.title, values.description || '', values.startTime, values.endTime);
+      addTask(flow.id, values.title, values.description || '', values.date?.toISOString(), values.startTime, values.endTime);
       form.reset();
       toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
     }
@@ -137,6 +142,47 @@ export function FlowPageContent({ id }: { id: string }) {
                         <FormControl>
                           <Textarea placeholder="Add more details..." {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date < new Date(new Date().setHours(0,0,0,0))
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
