@@ -48,72 +48,69 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
 
   useEffect(() => {
     const checkStatus = () => {
-      const now = new Date();
-      const today = now.getDay();
-  
-      const isRecurringToday = task.recurringDays && task.recurringDays.length > 0 && task.recurringDays.includes(today);
+        const now = new Date();
+        const today = now.getDay();
+        const isRecurringToday = task.recurringDays && task.recurringDays.length > 0 && task.recurringDays.includes(today);
 
-      if (!isRecurringToday) {
-        setIsLive(false);
-        setIsOverdue(false);
-        setHasEnded(false);
-        setCountdown('');
-        return;
-      }
-      
-      const startDate = task.startDate ? new Date(task.startDate) : null;
-      const endDate = task.endDate ? new Date(task.endDate) : null;
+        // If it's a recurring task, it must be a scheduled day.
+        if ((task.recurringDays && task.recurringDays.length > 0) && !isRecurringToday) {
+            setIsLive(false);
+            setIsOverdue(false);
+            setHasEnded(false);
+            setCountdown('');
+            return;
+        }
 
-      if (startDate) startDate.setHours(0, 0, 0, 0);
-      if (endDate) endDate.setHours(23, 59, 59, 999);
+        const taskStartDate = task.startDate ? new Date(task.startDate) : null;
+        if(taskStartDate) taskStartDate.setHours(0,0,0,0);
 
-      if (startDate && now < startDate) {
-        setIsLive(false);
-        setHasEnded(false);
-        return;
-      }
-      if (endDate && now > endDate) {
-        setIsLive(false);
-        setHasEnded(true);
-        return;
-      }
-  
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      if (task.startTime) {
-        const [hours, minutes] = task.startTime.split(':');
-        todayStart.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-      }
-  
-      const todayEnd = new Date();
-      if (task.endTime) {
-        const [hours, minutes] = task.endTime.split(':');
-        todayEnd.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-      } else {
-        todayEnd.setHours(23, 59, 59, 999);
-      }
-      
-      const live = !task.completed && isWithinInterval(now, { start: todayStart, end: todayEnd });
-      setIsLive(live);
-  
-      const overdue = !task.completed && now > todayEnd;
-      setIsOverdue(overdue);
-      
-      const ended = !!(task.completed);
-      setHasEnded(ended);
-  
-      if (now < todayStart && !live && !ended) {
-        setCountdown(formatDistanceToNow(todayStart, { addSuffix: true }));
-      } else {
-        setCountdown('');
-      }
+        const taskEndDate = task.endDate ? new Date(task.endDate) : null;
+        if(taskEndDate) taskEndDate.setHours(23,59,59,999);
+
+        // Check if task is outside its master date range
+        if ((taskStartDate && now < taskStartDate) || (taskEndDate && now > taskEndDate)) {
+             setIsLive(false);
+             // set as overdue if it has passed the end date and is not complete
+             setIsOverdue(!!taskEndDate && now > taskEndDate && !task.completed);
+             setHasEnded(!!taskEndDate && now > taskEndDate);
+             setCountdown('');
+             return;
+        }
+
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0); // Default to start of the day
+        if (task.startTime) {
+            const [hours, minutes] = task.startTime.split(':');
+            todayStart.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+        }
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999); // Default to end of the day
+        if (task.endTime) {
+            const [hours, minutes] = task.endTime.split(':');
+            todayEnd.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+        }
+
+        const live = !task.completed && isWithinInterval(now, { start: todayStart, end: todayEnd });
+        const overdue = !task.completed && now > todayEnd;
+        const ended = !!(task.completed || now > todayEnd);
+        
+        setIsLive(live);
+        setIsOverdue(overdue);
+        setHasEnded(ended);
+        
+        if (now < todayStart && !live && !ended) {
+            setCountdown(formatDistanceToNow(todayStart, { addSuffix: true }));
+        } else {
+            setCountdown('');
+        }
     };
-  
+
     checkStatus();
-    const interval = setInterval(checkStatus, 5000); 
-  
+    const interval = setInterval(checkStatus, 5000);
+
     return () => clearInterval(interval);
-  }, [task.startDate, task.endDate, task.startTime, task.endTime, task.completed, task.recurringDays]);
+  }, [task]);
 
 
   const handleCheckedChange = (checked: boolean) => {
@@ -217,10 +214,16 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                 Overtime
               </Badge>
             )}
-            {hasEnded && !isLive && !isOverdue && (
+            {hasEnded && !isLive && !isOverdue && !task.completed && (
               <Badge variant="outline" className="gap-1 text-xs">
                 <CheckCircle className="h-3 w-3 text-green-600" />
                 Ended
+              </Badge>
+            )}
+             {task.completed && (
+              <Badge variant="outline" className="gap-1 text-xs">
+                <CheckCircle className="h-3 w-3 text-green-600" />
+                Completed
               </Badge>
             )}
             {countdown && !isLive && !task.completed && (
@@ -298,5 +301,3 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     </div>
   );
 }
-
-    
