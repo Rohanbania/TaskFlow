@@ -41,17 +41,26 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
 
   useEffect(() => {
     const getTaskDateTime = (date: string | undefined, time: string | undefined): Date | null => {
-      if (!date || !time) return null;
-      const [hours, minutes] = time.split(':');
+      if (!date) return null;
       const dateTime = new Date(date);
-      dateTime.setHours(parseInt(hours, 10));
-      dateTime.setMinutes(parseInt(minutes, 10));
-      dateTime.setSeconds(0, 0);
+      if (time) {
+        const [hours, minutes] = time.split(':');
+        dateTime.setHours(parseInt(hours, 10));
+        dateTime.setMinutes(parseInt(minutes, 10));
+        dateTime.setSeconds(0, 0);
+      } else {
+        // If no time, for startDate it is start of day, for endDate it is end of day
+        if (date === task.startDate) {
+          dateTime.setHours(0,0,0,0);
+        } else {
+          dateTime.setHours(23,59,59,999);
+        }
+      }
       return dateTime;
     }
 
-    const startDateTime = getTaskDateTime(task.date, task.startTime);
-    const endDateTime = getTaskDateTime(task.date, task.endTime);
+    const startDateTime = getTaskDateTime(task.startDate, task.startTime);
+    const endDateTime = getTaskDateTime(task.endDate || task.startDate, task.endTime);
 
     const checkStatus = () => {
       const now = new Date();
@@ -72,12 +81,25 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     const interval = setInterval(checkStatus, 1000); // Check every second for countdown
 
     return () => clearInterval(interval);
-  }, [task.date, task.startTime, task.endTime, task.completed]);
+  }, [task.startDate, task.endDate, task.startTime, task.endTime, task.completed]);
 
 
   const handleCheckedChange = (checked: boolean) => {
     updateTask(flowId, task.id, { completed: checked });
   };
+
+  const formatDateRange = () => {
+    if (task.startDate && task.endDate) {
+      if (task.startDate === task.endDate) {
+        return format(new Date(task.startDate), "PPP");
+      }
+      return `${format(new Date(task.startDate), "PPP")} - ${format(new Date(task.endDate), "PPP")}`;
+    }
+    if (task.startDate) {
+      return format(new Date(task.startDate), "PPP");
+    }
+    return null;
+  }
 
   return (
     <div className="flex w-full items-start justify-between gap-4">
@@ -109,10 +131,10 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             </p>
           )}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            {task.date && (
+            {(task.startDate || task.endDate) && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
-                    <span>{format(new Date(task.date), "PPP")}</span>
+                    <span>{formatDateRange()}</span>
                 </div>
             )}
             {(task.startTime || task.endTime) && (
