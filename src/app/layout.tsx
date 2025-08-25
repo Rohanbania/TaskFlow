@@ -3,6 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { FlowsProvider } from '@/contexts/FlowsContext';
 import { Toaster } from '@/components/ui/toaster';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'TaskFlow',
@@ -30,10 +31,17 @@ export default function RootLayout({
           'bg-background text-foreground'
         )}
       >
-        <FlowsProvider>
-          {children}
-          <Toaster />
-        </FlowsProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <FlowsProvider>
+            {children}
+            <Toaster />
+          </FlowsProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

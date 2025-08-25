@@ -10,6 +10,7 @@ import { FlowCard } from '@/components/FlowCard';
 import { FlowsContext } from '@/contexts/FlowsContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 export default function Home() {
   const { flows, loading } = useContext(FlowsContext);
@@ -44,12 +45,15 @@ export default function Home() {
             <BookMarked className="h-7 w-7 text-primary" />
             <span className="text-2xl font-bold font-headline">TaskFlow</span>
           </Link>
-          <CreateFlowDialog>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Flow
-            </Button>
-          </CreateFlowDialog>
+          <div className="flex items-center gap-2">
+            <ThemeSwitcher />
+            <CreateFlowDialog>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Flow
+              </Button>
+            </CreateFlowDialog>
+          </div>
         </div>
       </header>
 
