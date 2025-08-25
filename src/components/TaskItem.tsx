@@ -45,7 +45,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
-    const getTaskDateTime = (date: string | undefined, time: string | undefined): Date | null => {
+    const getTaskDateTime = (date: string | undefined, time: string | undefined, type: 'start' | 'end'): Date | null => {
       if (!date) return null;
       const dateTime = new Date(date);
       if (time) {
@@ -54,43 +54,38 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
         dateTime.setMinutes(parseInt(minutes, 10));
         dateTime.setSeconds(0, 0);
       } else {
-        // If no time, for startDate it is start of day, for endDate it is end of day
-        if (date === task.startDate) {
-          dateTime.setHours(0,0,0,0);
+        if (type === 'start') {
+          dateTime.setHours(0, 0, 0, 0);
         } else {
-          dateTime.setHours(23,59,59,999);
+          dateTime.setHours(23, 59, 59, 999);
         }
       }
       return dateTime;
     }
 
-    const startDateTime = getTaskDateTime(task.startDate, task.startTime);
-    const endDateTime = getTaskDateTime(task.endDate || task.startDate, task.endTime);
+    const startDateTime = getTaskDateTime(task.startDate, task.startTime, 'start');
+    const endDateTime = getTaskDateTime(task.endDate || task.startDate, task.endTime, 'end');
 
     const checkStatus = () => {
       const now = new Date();
-      if (endDateTime && !task.completed && now > endDateTime) {
-        setIsOverdue(true);
-      } else {
-        setIsOverdue(false);
-      }
+      
+      // Live status
+      const live = startDateTime && endDateTime && !task.completed && now >= startDateTime && now <= endDateTime;
+      setIsLive(live || false);
+      
+      // Overdue status
+      const overdue = endDateTime && !task.completed && now > endDateTime;
+      setIsOverdue(overdue);
+      
+      // Ended status
+      const ended = endDateTime && task.completed && now > endDateTime;
+      setHasEnded(ended);
 
-      if (endDateTime && task.completed && now > endDateTime) {
-        setHasEnded(true);
-      } else {
-        setHasEnded(false);
-      }
-
+      // Countdown status
       if (startDateTime && now < startDateTime) {
         setCountdown(formatDistanceToNow(startDateTime, { addSuffix: true }));
       } else {
         setCountdown('');
-      }
-
-      if (startDateTime && endDateTime && !task.completed && now >= startDateTime && now <= endDateTime) {
-        setIsLive(true);
-      } else {
-        setIsLive(false);
       }
     };
 
@@ -168,7 +163,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                 Live
               </Badge>
             )}
-            {isOverdue && !isLive && (
+            {isOverdue && (
                <Badge variant="destructive" className="gap-1 text-xs">
                 <AlertTriangle className="h-3 w-3" />
                 Overtime
