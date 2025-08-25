@@ -26,7 +26,7 @@ import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { SuggestResourcesDialog } from './SuggestResourcesDialog';
 import { Badge } from './ui/badge';
-import { format, formatDistanceToNow, isWithinInterval, isToday as isTodayFns } from 'date-fns';
+import { format, formatDistanceToNow, isWithinInterval } from 'date-fns';
 import { TaskAnalyticsDialog } from './TaskAnalyticsDialog';
 import { EditTaskDialog } from './EditTaskDialog';
 
@@ -62,26 +62,20 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
         
         if (task.recurringDays && task.recurringDays.length > 0) {
             if (task.recurringDays.includes(todayWeekday)) {
-                // It's a recurring day. Check if it's within the global start/end date range.
                 if ((!taskStartDate || now >= taskStartDate) && (!taskEndDate || now <= taskEndDate)) {
                     isScheduledForToday = true;
                 }
             }
         } else if (taskStartDate) {
-            // Not recurring, check if today is within the date range for one-off tasks.
             const singleTaskEndDate = taskEndDate || taskStartDate;
             if (isWithinInterval(now, { start: taskStartDate, end: singleTaskEndDate })) {
                 isScheduledForToday = true;
             }
         } else {
-             // No start date, no recurring days. Assume it's an ad-hoc task valid for today if created today.
-             // This logic can be tricky. For now, we consider it not scheduled unless dates are provided.
-             isScheduledForToday = true; // Let's assume tasks without dates are always "current"
+             isScheduledForToday = true;
         }
         setIsToday(isScheduledForToday && !task.completed);
 
-
-        // If it's not scheduled for today, no need to calculate live/overdue status
         if (!isScheduledForToday) {
             setIsLive(false);
             setIsOverdue(false);
@@ -94,14 +88,14 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
         todayStart.setHours(0, 0, 0, 0); 
         if (task.startTime) {
             const [hours, minutes] = task.startTime.split(':');
-            todayStart.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+            todayStart.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
         }
 
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
         if (task.endTime) {
             const [hours, minutes] = task.endTime.split(':');
-            todayEnd.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+            todayEnd.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
         }
 
         const live = !task.completed && isWithinInterval(now, { start: todayStart, end: todayEnd });
@@ -112,15 +106,25 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
         setIsOverdue(overdue);
         setHasEnded(ended);
         
-        if (now < todayStart && !live && !ended) {
-            setCountdown(formatDistanceToNow(todayStart, { addSuffix: true }));
+        if (now < todayStart && !live && !ended && task.startTime) {
+            const totalSeconds = Math.floor((todayStart.getTime() - now.getTime()) / 1000);
+            if (totalSeconds > 0) {
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                setCountdown(
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+                );
+            } else {
+                setCountdown('');
+            }
         } else {
             setCountdown('');
         }
     };
 
     checkStatus();
-    const interval = setInterval(checkStatus, 5000);
+    const interval = setInterval(checkStatus, 1000);
 
     return () => clearInterval(interval);
   }, [task]);
@@ -248,7 +252,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             {countdown && !isLive && !task.completed && (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Timer className="h-3 w-3" />
-                Starts {countdown}
+                Starts in {countdown}
               </Badge>
             )}
           </div>
