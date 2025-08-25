@@ -126,7 +126,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             {isOverdue && (
                <Badge variant="destructive" className="gap-1 text-xs">
                 <AlertTriangle className="h-3 w-3" />
-                Overdue
+                Overtime
               </Badge>
             )}
             {countdown && !task.completed && (
