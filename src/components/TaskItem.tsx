@@ -1,7 +1,7 @@
 'use client';
 
 import { useContext, useState, useEffect } from 'react';
-import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2 } from 'lucide-react';
+import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +39,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   const [isResourcesDialogOpen, setIsResourcesDialogOpen] = useState(false);
   const [isAnalyticsDialogOpen, setIsAnalyticsDialogOpen] = useState(false);
   const [isOverdue, setIsOverdue] = useState(false);
+  const [isLive, setIsLive] = useState(false);
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
@@ -76,6 +77,12 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
         setCountdown(formatDistanceToNow(startDateTime, { addSuffix: true }));
       } else {
         setCountdown('');
+      }
+
+      if (startDateTime && endDateTime && !task.completed && now >= startDateTime && now <= endDateTime) {
+        setIsLive(true);
+      } else {
+        setIsLive(false);
       }
     };
 
@@ -147,7 +154,13 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                 </span>
               </div>
             )}
-            {isOverdue && (
+            {isLive && (
+              <Badge variant="default" className="gap-1 text-xs animate-pulse bg-green-600">
+                <Radio className="h-3 w-3" />
+                Live
+              </Badge>
+            )}
+            {isOverdue && !isLive && (
                <Badge variant="destructive" className="gap-1 text-xs">
                 <AlertTriangle className="h-3 w-3" />
                 Overtime
