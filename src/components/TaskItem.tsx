@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useRef } from 'react';
 import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio, Pencil, CheckCircle, Repeat, Pin } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -46,86 +46,105 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   const [isToday, setIsToday] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
   const [countdown, setCountdown] = useState('');
+  const notificationSentRef = useRef(false);
 
   useEffect(() => {
     const checkStatus = () => {
-        const now = new Date();
-        
-        const taskStartDate = task.startDate ? new Date(task.startDate) : null;
-        if(taskStartDate) taskStartDate.setHours(0,0,0,0);
+      const now = new Date();
+      
+      const taskStartDate = task.startDate ? new Date(task.startDate) : null;
+      if (taskStartDate) taskStartDate.setHours(0, 0, 0, 0);
+  
+      const taskEndDate = task.endDate ? new Date(task.endDate) : null;
+      if (taskEndDate) taskEndDate.setHours(23, 59, 59, 999);
+  
+      let isScheduledForToday = false;
+      const todayWeekday = now.getDay();
+  
+      if (task.recurringDays && task.recurringDays.length > 0) {
+        if (task.recurringDays.includes(todayWeekday)) {
+          if ((!taskStartDate || now >= taskStartDate) && (!taskEndDate || now <= taskEndDate)) {
+            isScheduledForToday = true;
+          }
+        }
+      } else if (taskStartDate) {
+        const singleTaskEndDate = taskEndDate || taskStartDate;
+        if (isWithinInterval(now, { start: taskStartDate, end: singleTaskEndDate })) {
+          isScheduledForToday = true;
+        }
+      } else {
+        isScheduledForToday = true;
+      }
+      setIsToday(isScheduledForToday && !task.completed);
+  
+      if (!isScheduledForToday) {
+        setIsLive(false);
+        setIsOverdue(false);
+        setHasEnded(false);
+        setCountdown('');
+        notificationSentRef.current = false; // Reset notification status for next day
+        return;
+      }
+  
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      if (task.startTime) {
+        const [hours, minutes] = task.startTime.split(':');
+        todayStart.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+      }
+  
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      if (task.endTime) {
+        const [hours, minutes] = task.endTime.split(':');
+        todayEnd.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+      } else {
+        todayEnd.setHours(0,0,0,0);
+        todayEnd.setDate(todayEnd.getDate() + 1);
+      }
+  
+      const live = !task.completed && isWithinInterval(now, { start: todayStart, end: todayEnd });
+      const overdue = !task.completed && now > todayEnd;
+      const ended = !!(task.completed || now > todayEnd);
+  
+      if (live && !notificationSentRef.current) {
+        if (Notification.permission === 'granted') {
+          new Notification('Task Started!', {
+            body: `It's time for: "${task.title}"`,
+            icon: '/bell.png' // You can add an icon for notifications
+          });
+        }
+        notificationSentRef.current = true;
+      }
 
-        const taskEndDate = task.endDate ? new Date(task.endDate) : null;
-        if(taskEndDate) taskEndDate.setHours(23,59,59,999);
-
-        let isScheduledForToday = false;
-        const todayWeekday = now.getDay();
-        
-        if (task.recurringDays && task.recurringDays.length > 0) {
-            if (task.recurringDays.includes(todayWeekday)) {
-                if ((!taskStartDate || now >= taskStartDate) && (!taskEndDate || now <= taskEndDate)) {
-                    isScheduledForToday = true;
-                }
-            }
-        } else if (taskStartDate) {
-            const singleTaskEndDate = taskEndDate || taskStartDate;
-            if (isWithinInterval(now, { start: taskStartDate, end: singleTaskEndDate })) {
-                isScheduledForToday = true;
-            }
+      setIsLive(live);
+      setIsOverdue(overdue);
+      setHasEnded(ended);
+  
+      if (!live && !ended && task.startTime && now < todayStart) {
+        const totalSeconds = Math.floor((todayStart.getTime() - now.getTime()) / 1000);
+        if (totalSeconds > 0) {
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+          setCountdown(
+            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+          );
         } else {
-             isScheduledForToday = true;
+          setCountdown('');
         }
-        setIsToday(isScheduledForToday && !task.completed);
+      } else {
+        setCountdown('');
+      }
 
-        if (!isScheduledForToday) {
-            setIsLive(false);
-            setIsOverdue(false);
-            setHasEnded(false);
-            setCountdown('');
-            return;
-        }
-
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0); 
-        if (task.startTime) {
-            const [hours, minutes] = task.startTime.split(':');
-            todayStart.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-        }
-
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
-        if (task.endTime) {
-            const [hours, minutes] = task.endTime.split(':');
-            todayEnd.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-        }
-
-        const live = !task.completed && isWithinInterval(now, { start: todayStart, end: todayEnd });
-        const overdue = !task.completed && now > todayEnd;
-        const ended = !!(task.completed || now > todayEnd);
-        
-        setIsLive(live);
-        setIsOverdue(overdue);
-        setHasEnded(ended);
-        
-        if (now < todayStart && !live && !ended && task.startTime) {
-            const totalSeconds = Math.floor((todayStart.getTime() - now.getTime()) / 1000);
-            if (totalSeconds > 0) {
-                const hours = Math.floor(totalSeconds / 3600);
-                const minutes = Math.floor((totalSeconds % 3600) / 60);
-                const seconds = totalSeconds % 60;
-                setCountdown(
-                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-                );
-            } else {
-                setCountdown('');
-            }
-        } else {
-            setCountdown('');
-        }
+      if(ended) {
+        notificationSentRef.current = false;
+      }
     };
-
+  
     checkStatus();
     const interval = setInterval(checkStatus, 1000);
-
+  
     return () => clearInterval(interval);
   }, [task]);
 

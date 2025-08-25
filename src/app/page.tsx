@@ -1,17 +1,40 @@
 'use client';
 
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BookMarked, Plus, LayoutGrid } from 'lucide-react';
+import { BookMarked, Plus, LayoutGrid, Bell, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { CreateFlowDialog } from '@/components/CreateFlowDialog';
 import { FlowCard } from '@/components/FlowCard';
 import { FlowsContext } from '@/contexts/FlowsContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function Home() {
   const { flows, loading } = useContext(FlowsContext);
+  const [notificationPermission, setNotificationPermission] = useState('default');
+  const [showPermissionBanner, setShowPermissionBanner] = useState(false);
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+      if (Notification.permission === 'default') {
+        setShowPermissionBanner(true);
+      }
+    }
+  }, []);
+
+  const handleRequestPermission = () => {
+    Notification.requestPermission().then((permission) => {
+      setNotificationPermission(permission);
+      setShowPermissionBanner(false);
+    });
+  };
+  
+  const handleDismissBanner = () => {
+    setShowPermissionBanner(false);
+  }
 
   return (
     <div className="min-h-screen">
@@ -31,6 +54,26 @@ export default function Home() {
       </header>
 
       <main className="container mx-auto px-4 py-8 md:px-6">
+        {showPermissionBanner && (
+          <Alert className="mb-6 flex items-start justify-between gap-4">
+           <div className='flex items-start gap-4'>
+            <Bell className="h-5 w-5 text-primary" />
+              <div>
+                <AlertTitle className='font-headline'>Enable Notifications</AlertTitle>
+                <AlertDescription>
+                  Get notified when your tasks are about to start.
+                </AlertDescription>
+              </div>
+           </div>
+            <div className='flex gap-2 flex-shrink-0'>
+                <Button onClick={handleRequestPermission}>Enable</Button>
+                 <Button variant='ghost' size='icon' onClick={handleDismissBanner} className='h-9 w-9'>
+                    <X className='h-4 w-4' />
+                 </Button>
+            </div>
+          </Alert>
+        )}
+
         <div className="mb-8 flex items-center gap-2">
           <LayoutGrid className="h-6 w-6 text-muted-foreground" />
           <h1 className="text-3xl font-bold font-headline">Your Flows</h1>
