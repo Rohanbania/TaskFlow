@@ -103,7 +103,18 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
 
   const updateTask = useCallback((flowId: string, taskId: string, updates: Partial<Task>) => {
     updateFlowTasks(flowId, (tasks) =>
-      tasks.map((task) => (task.id === taskId ? { ...task, ...updates } : task))
+      tasks.map((task) => {
+        if (task.id === taskId) {
+          const updatedTask = { ...task, ...updates };
+          if (updates.completed === true && !task.completed) {
+            updatedTask.completionDate = new Date().toISOString();
+          } else if (updates.completed === false) {
+            delete updatedTask.completionDate;
+          }
+          return updatedTask;
+        }
+        return task;
+      })
     );
   }, [updateFlowTasks]);
 

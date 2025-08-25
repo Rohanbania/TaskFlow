@@ -7,10 +7,11 @@ export interface Task {
   endDate?: string;
   startTime?: string;
   endTime?: string;
+  completionDate?: string;
 }
 
 export interface Flow {
-  id: string;
+  id:string;
   title: string;
   tasks: Task[];
 }
