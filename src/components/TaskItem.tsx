@@ -49,10 +49,11 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   useEffect(() => {
     const checkStatus = () => {
       const now = new Date();
-      const today = now.getDay(); // Sunday - 0, Monday - 1, etc.
+      const today = now.getDay();
   
-      // Task is not recurring, or today is not a recurring day, so no status.
-      if (!task.recurringDays || task.recurringDays.length === 0 || !task.recurringDays.includes(today)) {
+      const isRecurringToday = task.recurringDays && task.recurringDays.length > 0 && task.recurringDays.includes(today);
+
+      if (!isRecurringToday) {
         setIsLive(false);
         setIsOverdue(false);
         setHasEnded(false);
@@ -63,28 +64,20 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
       const startDate = task.startDate ? new Date(task.startDate) : null;
       const endDate = task.endDate ? new Date(task.endDate) : null;
 
-      // Check if current date is within the overall start/end date range of the task
-      if (startDate && endDate) {
-          const dateRange = { start: new Date(startDate.setHours(0,0,0,0)), end: new Date(endDate.setHours(23,59,59,999)) };
-          if (!isWithinInterval(now, dateRange)) {
-            setIsLive(false);
-            setHasEnded(now > dateRange.end); // Task period has ended
-            return;
-          }
-      } else if (startDate) {
-          if (now < new Date(startDate.setHours(0,0,0,0))) {
-             setIsLive(false);
-             return;
-          }
-      } else if (endDate) {
-          if (now > new Date(endDate.setHours(23,59,59,999))) {
-              setIsLive(false);
-              setHasEnded(true);
-              return;
-          }
+      if (startDate) startDate.setHours(0, 0, 0, 0);
+      if (endDate) endDate.setHours(23, 59, 59, 999);
+
+      if (startDate && now < startDate) {
+        setIsLive(false);
+        setHasEnded(false);
+        return;
+      }
+      if (endDate && now > endDate) {
+        setIsLive(false);
+        setHasEnded(true);
+        return;
       }
   
-      // Construct today's start and end time
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       if (task.startTime) {
@@ -109,8 +102,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
       const ended = !!(task.completed);
       setHasEnded(ended);
   
-      // Countdown status for today
-      if (now < todayStart) {
+      if (now < todayStart && !live && !ended) {
         setCountdown(formatDistanceToNow(todayStart, { addSuffix: true }));
       } else {
         setCountdown('');
@@ -118,7 +110,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     };
   
     checkStatus();
-    const interval = setInterval(checkStatus, 1000); // Check every second for countdown
+    const interval = setInterval(checkStatus, 5000); 
   
     return () => clearInterval(interval);
   }, [task.startDate, task.endDate, task.startTime, task.endTime, task.completed, task.recurringDays]);
@@ -133,7 +125,6 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     const endDate = task.endDate ? new Date(task.endDate) : null;
 
     if (startDate && endDate) {
-      // Adjust for timezone offset to show correct local date
       const adjustedStartDate = new Date(startDate.getTime() + startDate.getTimezoneOffset() * 60000);
       const adjustedEndDate = new Date(endDate.getTime() + endDate.getTimezoneOffset() * 60000);
 
@@ -144,11 +135,11 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     }
     if (startDate) {
       const adjustedStartDate = new Date(startDate.getTime() + startDate.getTimezoneOffset() * 60000);
-      return format(adjustedStartDate, "PPP");
+      return `Starts ${format(adjustedStartDate, "PPP")}`;
     }
      if (endDate) {
       const adjustedEndDate = new Date(endDate.getTime() + endDate.getTimezoneOffset() * 60000);
-      return format(adjustedEndDate, "PPP");
+      return `Ends ${format(adjustedEndDate, "PPP")}`;
     }
     return null;
   }
@@ -214,7 +205,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                 </span>
               </div>
             )}
-            {isLive && !isOverdue && (
+            {isLive && (
               <Badge variant="default" className="gap-1 text-xs animate-pulse bg-green-600">
                 <Radio className="h-3 w-3" />
                 Live
@@ -226,7 +217,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                 Overtime
               </Badge>
             )}
-            {hasEnded && (
+            {hasEnded && !isLive && !isOverdue && (
               <Badge variant="outline" className="gap-1 text-xs">
                 <CheckCircle className="h-3 w-3 text-green-600" />
                 Ended
@@ -307,3 +298,5 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     </div>
   );
 }
+
+    
