@@ -3,47 +3,17 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Plus, ClipboardList, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Download, Plus, ClipboardList } from 'lucide-react';
 import { FlowsContext } from '@/contexts/FlowsContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskList } from '@/components/TaskList';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { Card, CardContent } from '@/components/ui/card';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-
-const taskFormSchema = z.object({
-  title: z.string().min(1, { message: 'Title is required' }),
-  description: z.string().optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
-});
-
-type TaskFormValues = z.infer<typeof taskFormSchema>;
+import { AddTaskDialog } from '@/components/AddTaskDialog';
 
 export function FlowPageContent({ id }: { id: string }) {
-  const { getFlowById, addTask, loading } = useContext(FlowsContext);
+  const { getFlowById, loading } = useContext(FlowsContext);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const flow = useMemo(() => getFlowById(id), [getFlowById, id]);
 
@@ -53,19 +23,6 @@ export function FlowPageContent({ id }: { id: string }) {
       router.replace('/');
     }
   }, [flow, loading, router]);
-  
-  const form = useForm<TaskFormValues>({
-    resolver: zodResolver(taskFormSchema),
-    defaultValues: { title: '', description: '', startTime: '', endTime: '' },
-  });
-  
-  const handleAddTask = (values: TaskFormValues) => {
-    if (flow) {
-      addTask(flow.id, values.title, values.description || '', values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime);
-      form.reset();
-      toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
-    }
-  };
 
   const handleExport = () => {
     if (!flow) return;
@@ -77,7 +34,6 @@ export function FlowPageContent({ id }: { id: string }) {
     a.download = `${flow.title.replace(/\s+/g, '_')}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: 'Flow Exported', description: 'Your flow has been downloaded as a text file.' });
   };
   
   if (!isClient || loading) {
@@ -104,172 +60,24 @@ export function FlowPageContent({ id }: { id: string }) {
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
+            <AddTaskDialog flowId={flow.id}>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Task
+              </Button>
+            </AddTaskDialog>
           </div>
         </div>
       </header>
 
-      <main className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <main>
+        <div>
            <div className="mb-6 flex items-center gap-2">
               <ClipboardList className="h-6 w-6 text-muted-foreground" />
               <h2 className="text-2xl font-semibold font-headline">Tasks</h2>
             </div>
             <TaskList flowId={flow.id} tasks={flow.tasks} />
         </div>
-
-        <aside className="lg:col-span-1">
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="mb-4 text-lg font-semibold font-headline">Add New Task</h3>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleAddTask)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Task Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Exfoliate" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description (Optional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Add more details..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="startDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Start Date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date < new Date(new Date().setHours(0,0,0,0))
-                                }
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="endDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>End Date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date < new Date(new Date().setHours(0,0,0,0))
-                                }
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="startTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Start Time</FormLabel>
-                          <FormControl>
-                            <Input type="time" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="endTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>End Time</FormLabel>
-                          <FormControl>
-                            <Input type="time" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Task
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </aside>
       </main>
     </div>
   );
@@ -281,17 +89,15 @@ function PageSkeleton() {
       <Skeleton className="mb-4 h-8 w-36" />
       <div className="mb-8 flex items-center justify-between">
         <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-10 w-28" />
+        <div className="flex gap-2">
+            <Skeleton className="h-10 w-28" />
+            <Skeleton className="h-10 w-28" />
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </div>
-        <div className="lg:col-span-1">
-          <Skeleton className="h-64 w-full" />
-        </div>
+      <div className="space-y-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
       </div>
     </div>
   );
