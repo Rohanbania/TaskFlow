@@ -124,12 +124,14 @@ export function FlowPageContent({ id }: { id: string }) {
       </main>
 
        {/* Hidden calendars for PDF export */}
-      <div className="pointer-events-none absolute -left-[9999px] top-auto opacity-0">
-        {flow.tasks.map((task, index) => (
+       <div className="absolute opacity-0 -z-10" aria-hidden="true">
+        <div className="fixed left-0 top-0">
+         {flow.tasks.map((task, index) => (
           <div key={task.id} ref={el => calendarRefs.current[index] = el} className="w-[800px] p-4 bg-white">
             <TaskCalendar task={task} />
           </div>
         ))}
+        </div>
       </div>
     </div>
   );
