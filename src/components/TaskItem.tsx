@@ -45,29 +45,49 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
-    const getTaskDateTime = (date: string | undefined, time: string | undefined, type: 'start' | 'end'): Date | null => {
-      if (!date) return null;
-      const dateTime = new Date(date);
-      if (time) {
-        const [hours, minutes] = time.split(':');
-        dateTime.setHours(parseInt(hours, 10));
-        dateTime.setMinutes(parseInt(minutes, 10));
-        dateTime.setSeconds(0, 0);
+    const getTaskDateTime = (dateString: string | undefined, timeString: string | undefined): Date | null => {
+      if (!dateString) return null;
+      
+      const date = new Date(dateString);
+      if (timeString) {
+        const [hours, minutes] = timeString.split(':');
+        date.setHours(parseInt(hours, 10));
+        date.setMinutes(parseInt(minutes, 10));
+        date.setSeconds(0, 0);
       } else {
-        if (type === 'start') {
-          dateTime.setHours(0, 0, 0, 0);
-        } else {
-          dateTime.setHours(23, 59, 59, 999);
-        }
+        // If no time, set to start/end of day to avoid ambiguity
+        // Note: This part of logic is simplified because the main status check handles default times.
       }
-      return dateTime;
+      return date;
     }
-
-    const startDateTime = getTaskDateTime(task.startDate, task.startTime, 'start');
-    const endDateTime = getTaskDateTime(task.endDate || task.startDate, task.endTime, 'end');
 
     const checkStatus = () => {
       const now = new Date();
+
+      const startDate = task.startDate ? new Date(task.startDate) : null;
+      const endDate = task.endDate ? new Date(task.endDate) : startDate;
+
+      let startDateTime: Date | null = null;
+      if (startDate) {
+          startDateTime = new Date(startDate.getTime());
+          if (task.startTime) {
+              const [hours, minutes] = task.startTime.split(':');
+              startDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+          } else {
+              startDateTime.setHours(0, 0, 0, 0);
+          }
+      }
+
+      let endDateTime: Date | null = null;
+      if (endDate) {
+          endDateTime = new Date(endDate.getTime());
+          if (task.endTime) {
+              const [hours, minutes] = task.endTime.split(':');
+              endDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 59, 999);
+          } else {
+              endDateTime.setHours(23, 59, 59, 999);
+          }
+      }
       
       const overdue = endDateTime && !task.completed && now > endDateTime;
       setIsOverdue(overdue);
@@ -98,14 +118,20 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   };
 
   const formatDateRange = () => {
-    if (task.startDate && task.endDate) {
-      if (task.startDate === task.endDate) {
-        return format(new Date(task.startDate), "PPP");
+    const startDate = task.startDate ? new Date(task.startDate) : null;
+    const endDate = task.endDate ? new Date(task.endDate) : null;
+
+    if (startDate && endDate) {
+      if (startDate.toDateString() === endDate.toDateString()) {
+         return format(startDate, "PPP");
       }
-      return `${format(new Date(task.startDate), "PPP")} - ${format(new Date(task.endDate), "PPP")}`;
+      return `${format(startDate, "PPP")} - ${format(endDate, "PPP")}`;
     }
-    if (task.startDate) {
-      return format(new Date(task.startDate), "PPP");
+    if (startDate) {
+      return format(startDate, "PPP");
+    }
+     if (endDate) {
+      return format(endDate, "PPP");
     }
     return null;
   }
@@ -154,7 +180,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                 </span>
               </div>
             )}
-            {isLive && (
+            {isLive && !isOverdue && (
               <Badge variant="default" className="gap-1 text-xs animate-pulse bg-green-600">
                 <Radio className="h-3 w-3" />
                 Live
@@ -172,7 +198,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                 Ended
               </Badge>
             )}
-            {countdown && !task.completed && (
+            {countdown && !isLive && !task.completed && (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Timer className="h-3 w-3" />
                 Starts {countdown}
@@ -247,3 +273,5 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     </div>
   );
 }
+
+    
