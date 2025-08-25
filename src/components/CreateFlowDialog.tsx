@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, Wand2 } from 'lucide-react';
+import { Loader2, Wand2, Plus, Save } from 'lucide-react';
 
 import {
   Dialog,
@@ -23,8 +23,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { generateTasksFromTitleAction } from '@/lib/actions';
-import { useContext } from 'react';
 import { FlowsContext } from '@/contexts/FlowsContext';
+import type { Flow } from '@/lib/types';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters long.' }),
@@ -33,12 +33,18 @@ const formSchema = z.object({
 
 type CreateFlowFormValues = z.infer<typeof formSchema>;
 
-export function CreateFlowDialog({ children }: { children: ReactNode }) {
+interface CreateFlowDialogProps {
+    children: ReactNode;
+    flowToEdit?: Flow;
+}
+
+export function CreateFlowDialog({ children, flowToEdit }: CreateFlowDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { addFlow } = useContext(FlowsContext);
+  const { addFlow, updateFlow } = useContext(FlowsContext);
   const router = useRouter();
   const { toast } = useToast();
+  const isEditMode = !!flowToEdit;
 
   const form = useForm<CreateFlowFormValues>({
     resolver: zodResolver(formSchema),
@@ -47,37 +53,61 @@ export function CreateFlowDialog({ children }: { children: ReactNode }) {
       generateTasks: false,
     },
   });
+  
+  useEffect(() => {
+    if (flowToEdit && open) {
+      form.reset({
+        title: flowToEdit.title,
+        generateTasks: false, // Don't generate tasks in edit mode
+      });
+    } else if (!isEditMode && open) {
+      form.reset({
+        title: '',
+        generateTasks: false,
+      });
+    }
+  }, [flowToEdit, open, form, isEditMode]);
+
 
   async function onSubmit(values: CreateFlowFormValues) {
     setIsSubmitting(true);
     try {
-      let generatedTasks: string[] = [];
-      if (values.generateTasks) {
-        const result = await generateTasksFromTitleAction(values.title);
-        if (result.success && result.data) {
-          generatedTasks = result.data;
-          toast({
-            title: 'AI Magic ✨',
-            description: `Successfully generated ${generatedTasks.length} tasks for your new flow.`,
-          });
+        if (isEditMode) {
+            updateFlow(flowToEdit.id, { title: values.title });
+            toast({
+                title: 'Flow Updated',
+                description: `Successfully renamed to "${values.title}".`,
+            });
         } else {
-          toast({
-            variant: 'destructive',
-            title: 'AI Task Generation Failed',
-            description: result.error || 'Could not generate tasks. Please try again.',
-          });
+            let generatedTasks: string[] = [];
+            if (values.generateTasks) {
+                const result = await generateTasksFromTitleAction(values.title);
+                if (result.success && result.data) {
+                generatedTasks = result.data;
+                toast({
+                    title: 'AI Magic ✨',
+                    description: `Successfully generated ${generatedTasks.length} tasks for your new flow.`,
+                });
+                } else {
+                toast({
+                    variant: 'destructive',
+                    title: 'AI Task Generation Failed',
+                    description: result.error || 'Could not generate tasks. Please try again.',
+                });
+                }
+            }
+            
+            const newFlow = addFlow(values.title, generatedTasks);
+            router.push(`/flow/${newFlow.id}`);
         }
-      }
       
-      const newFlow = addFlow(values.title, generatedTasks);
       form.reset();
       setOpen(false);
-      router.push(`/flow/${newFlow.id}`);
 
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Error creating flow',
+        title: `Error ${isEditMode ? 'updating' : 'creating'} flow`,
         description: 'Something went wrong. Please try again.',
       });
     } finally {
@@ -90,9 +120,9 @@ export function CreateFlowDialog({ children }: { children: ReactNode }) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Create a New Flow</DialogTitle>
+          <DialogTitle className="font-headline">{isEditMode ? 'Edit Flow' : 'Create a New Flow'}</DialogTitle>
           <DialogDescription>
-            Give your new flow a title to get started. A flow is a collection of related tasks.
+             {isEditMode ? "Update your flow's title below." : "Give your new flow a title to get started. A flow is a collection of related tasks."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -110,7 +140,7 @@ export function CreateFlowDialog({ children }: { children: ReactNode }) {
                 </FormItem>
               )}
             />
-             <FormField
+             {!isEditMode && <FormField
               control={form.control}
               name="generateTasks"
               render={({ field }) => (
@@ -131,14 +161,14 @@ export function CreateFlowDialog({ children }: { children: ReactNode }) {
                   </div>
                 </FormItem>
               )}
-            />
+            />}
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Create Flow
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isEditMode ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />)}
+                {isEditMode ? 'Save Changes' : 'Create Flow'}
               </Button>
             </DialogFooter>
           </form>

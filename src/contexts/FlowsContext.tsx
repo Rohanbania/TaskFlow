@@ -7,6 +7,7 @@ interface FlowsContextType {
   flows: Flow[];
   loading: boolean;
   addFlow: (title: string, generatedTasks?: string[]) => Flow;
+  updateFlow: (flowId: string, updates: Partial<Flow>) => void;
   deleteFlow: (flowId: string) => void;
   getFlowById: (flowId: string) => Flow | undefined;
   addTask: (flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string) => void;
@@ -19,6 +20,7 @@ export const FlowsContext = createContext<FlowsContextType>({
   flows: [],
   loading: true,
   addFlow: () => { throw new Error('addFlow function not implemented'); },
+  updateFlow: () => {},
   deleteFlow: () => {},
   getFlowById: () => undefined,
   addTask: () => {},
@@ -65,6 +67,14 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     };
     setFlows((prevFlows) => [...prevFlows, newFlow]);
     return newFlow;
+  }, []);
+  
+  const updateFlow = useCallback((flowId: string, updates: Partial<Flow>) => {
+    setFlows((prevFlows) =>
+      prevFlows.map((flow) =>
+        flow.id === flowId ? { ...flow, ...updates } : flow
+      )
+    );
   }, []);
 
   const deleteFlow = useCallback((flowId: string) => {
@@ -135,6 +145,7 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     flows,
     loading,
     addFlow,
+    updateFlow,
     deleteFlow,
     getFlowById,
     addTask,

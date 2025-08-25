@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useContext } from 'react';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Trash2, Pencil } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,9 +22,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import type { Flow } from '@/lib/types';
 import { FlowsContext } from '@/contexts/FlowsContext';
+import { CreateFlowDialog } from './CreateFlowDialog';
 
 interface FlowCardProps {
   flow: Flow;
@@ -49,6 +51,13 @@ export function FlowCard({ flow }: FlowCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <CreateFlowDialog flowToEdit={flow}>
+                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Flow
+                </DropdownMenuItem>
+              </CreateFlowDialog>
+              <DropdownMenuSeparator />
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
                   <Trash2 className="mr-2 h-4 w-4" />
