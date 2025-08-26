@@ -110,7 +110,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
   const handleFormSubmit = async (values: TaskFormValues) => {
     setIsSubmitting(true);
     try {
-        const taskData = {
+        const taskData: Partial<Task> = {
           title: values.title,
           description: values.description || '',
           startDate: values.startDate?.toISOString(),
@@ -119,12 +119,31 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
           endTime: values.endTime,
           recurringDays: values.recurringDays,
         };
+        
+        // Remove undefined properties to avoid Firestore errors
+        Object.keys(taskData).forEach(key => {
+          const taskKey = key as keyof Partial<Task>;
+          if (taskData[taskKey] === undefined || taskData[taskKey] === '') {
+            delete taskData[taskKey];
+          }
+        });
+
 
         if (isEditMode && task) {
           await updateTask(flowId, task.id, taskData);
           toast({ title: 'Task Updated', description: `"${values.title}" has been updated.` });
         } else {
-          await addTask(flowId, values.title, values.description, values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime, values.recurringDays);
+          // The addTask function expects specific arguments, not an object
+          await addTask(
+            flowId,
+            values.title,
+            values.description,
+            values.startDate?.toISOString(),
+            values.endDate?.toISOString(),
+            values.startTime,
+            values.endTime,
+            values.recurringDays
+          );
           toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
         }
 
@@ -350,3 +369,5 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
     </Dialog>
   );
 }
+
+    
