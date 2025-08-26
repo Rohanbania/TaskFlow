@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { CheckCircle2, AlertTriangle, ListTodo } from 'lucide-react';
 import { format } from 'date-fns';
 import { TaskCalendar } from './TaskCalendar';
+import { ScrollArea } from './ui/scroll-area';
 
 
 type TaskStatus = 'completed-on-time' | 'completed-late' | 'incomplete-overdue' | 'pending';
@@ -127,39 +128,41 @@ export function TaskAnalyticsDialog({
             Status and details for: "{task.title}"
           </DialogDescription>
         </DialogHeader>
-        <div className="mt-4 space-y-6">
-            <div className="flex items-center justify-center">
-                <Badge variant="outline" className={cn(
-                    "text-base font-semibold gap-2 px-4 py-2 border-2",
-                    statusInfo[status].className
-                )}>
-                    {statusInfo[status].icon}
-                    <span>{statusInfo[status].text}</span>
-                </Badge>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm rounded-lg border p-4">
-                <div className="font-semibold text-muted-foreground">Start Date:</div>
-                <div className="font-medium">{getStartDate()}</div>
-
-                <div className="font-semibold text-muted-foreground">Due Date:</div>
-                <div className="font-medium">{getDueDate()}</div>
-
-                <div className="font-semibold text-muted-foreground">Completed Date:</div>
-                <div className="font-medium">{task.completionDate ? format(new Date(task.completionDate), "PPP 'at' p") : 'Not completed'}</div>
-            </div>
-
-            <div className="bg-background rounded-lg border">
-                <TaskCalendar task={task} />
-            </div>
-
-             {task.description && 
-                <div>
-                     <h4 className="font-semibold mb-2 text-sm">Description</h4>
-                     <p className="text-sm text-muted-foreground bg-secondary/50 p-3 rounded-md">{task.description}</p>
+        <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+            <div className="mt-4 space-y-6">
+                <div className="flex items-center justify-center">
+                    <Badge variant="outline" className={cn(
+                        "text-base font-semibold gap-2 px-4 py-2 border-2",
+                        statusInfo[status].className
+                    )}>
+                        {statusInfo[status].icon}
+                        <span>{statusInfo[status].text}</span>
+                    </Badge>
                 </div>
-             }
-        </div>
+                
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm rounded-lg border p-4">
+                    <div className="font-semibold text-muted-foreground">Start Date:</div>
+                    <div className="font-medium">{getStartDate()}</div>
+
+                    <div className="font-semibold text-muted-foreground">Due Date:</div>
+                    <div className="font-medium">{getDueDate()}</div>
+
+                    <div className="font-semibold text-muted-foreground">Completed Date:</div>
+                    <div className="font-medium">{task.completionDate ? format(new Date(task.completionDate), "PPP 'at' p") : 'Not completed'}</div>
+                </div>
+
+                <div className="bg-background rounded-lg border">
+                    <TaskCalendar task={task} />
+                </div>
+
+                {task.description && 
+                    <div>
+                        <h4 className="font-semibold mb-2 text-sm">Description</h4>
+                        <p className="text-sm text-muted-foreground bg-secondary/50 p-3 rounded-md">{task.description}</p>
+                    </div>
+                }
+            </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
