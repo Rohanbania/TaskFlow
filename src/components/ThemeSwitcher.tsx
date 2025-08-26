@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -19,15 +20,13 @@ const LOCAL_STORAGE_COLOR_KEY = 'color-theme';
 
 export function ThemeSwitcher() {
   const { setTheme: setMode, theme: mode } = useTheme();
-  const [colorTheme, setColorTheme] = React.useState<string>('');
+  const [colorTheme, setColorTheme] = React.useState<string>('zinc');
 
   React.useEffect(() => {
     // On mount, read the color theme from local storage
     const storedTheme = localStorage.getItem(LOCAL_STORAGE_COLOR_KEY);
     if (storedTheme && COLOR_THEMES.includes(storedTheme)) {
         setColorTheme(storedTheme);
-    } else {
-        setColorTheme('zinc');
     }
   }, []);
 
