@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useState, useEffect, useCallback, type ReactNode, useContext } from 'react';
@@ -10,26 +11,26 @@ interface FlowsContextType {
   flows: Flow[];
   loading: boolean;
   addFlow: (title: string, generatedTasks?: string[]) => Promise<string>;
-  updateFlow: (flowId: string, updates: Partial<Omit<Flow, 'id' | 'tasks'>>) => void;
-  deleteFlow: (flowId: string) => void;
+  updateFlow: (flowId: string, updates: Partial<Omit<Flow, 'id' | 'tasks'>>) => Promise<void>;
+  deleteFlow: (flowId: string) => Promise<void>;
   getFlowById: (flowId: string) => Flow | undefined;
-  addTask: (flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, recurringDays?: number[]) => void;
-  updateTask: (flowId: string, taskId: string, updates: Partial<Task>) => void;
-  deleteTask: (flowId: string, taskId: string) => void;
-  reorderTasks: (flowId: string, sourceIndex: number, destinationIndex: number) => void;
+  addTask: (flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, recurringDays?: number[]) => Promise<void>;
+  updateTask: (flowId: string, taskId: string, updates: Partial<Task>) => Promise<void>;
+  deleteTask: (flowId: string, taskId: string) => Promise<void>;
+  reorderTasks: (flowId: string, sourceIndex: number, destinationIndex: number) => Promise<void>;
 }
 
 export const FlowsContext = createContext<FlowsContextType>({
   flows: [],
   loading: true,
   addFlow: async () => { throw new Error('addFlow function not implemented'); },
-  updateFlow: () => {},
-  deleteFlow: () => {},
+  updateFlow: async () => {},
+  deleteFlow: async () => {},
   getFlowById: () => undefined,
-  addTask: () => {},
-  updateTask: () => {},
-  deleteTask: () => {},
-  reorderTasks: () => {},
+  addTask: async () => {},
+  updateTask: async () => {},
+  deleteTask: async () => {},
+  reorderTasks: async () => {},
 });
 
 export function FlowsProvider({ children }: { children: ReactNode }) {
@@ -110,9 +111,9 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
   }, [flows]);
 
   const updateFlowTasks = useCallback(async (flowId: string, newTasks: Task[] | ((tasks: Task[]) => Task[])) => {
-    if (!user) return;
+    if (!user) return Promise.reject(new Error('User not authenticated'));
     const flow = flows.find(f => f.id === flowId);
-    if (!flow) return;
+    if (!flow) return Promise.reject(new Error('Flow not found'));
     
     const updatedTasks = typeof newTasks === 'function' ? newTasks(flow.tasks) : newTasks;
     
@@ -120,7 +121,7 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     await updateDoc(flowRef, { tasks: updatedTasks });
   }, [user, flows]);
 
-  const addTask = useCallback((flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, recurringDays?: number[]) => {
+  const addTask = useCallback(async (flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, recurringDays?: number[]) => {
     const newTask: Task = {
       id: doc(collection(db, `users/${user?.uid}/flows/${flowId}/tasks`)).id,
       title: taskTitle,
@@ -132,11 +133,11 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
       endTime,
       recurringDays,
     };
-    updateFlowTasks(flowId, (tasks) => [...tasks, newTask]);
+    await updateFlowTasks(flowId, (tasks) => [...tasks, newTask]);
   }, [updateFlowTasks, user]);
 
-  const updateTask = useCallback((flowId: string, taskId: string, updates: Partial<Task>) => {
-    updateFlowTasks(flowId, (tasks) =>
+  const updateTask = useCallback(async (flowId: string, taskId: string, updates: Partial<Task>) => {
+    await updateFlowTasks(flowId, (tasks) =>
       tasks.map((task) => {
         if (task.id === taskId) {
           const updatedTask = { ...task, ...updates };
@@ -152,12 +153,12 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     );
   }, [updateFlowTasks]);
 
-  const deleteTask = useCallback((flowId: string, taskId: string) => {
-    updateFlowTasks(flowId, (tasks) => tasks.filter((task) => task.id !== taskId));
+  const deleteTask = useCallback(async (flowId: string, taskId: string) => {
+    await updateFlowTasks(flowId, (tasks) => tasks.filter((task) => task.id !== taskId));
   }, [updateFlowTasks]);
 
-  const reorderTasks = useCallback((flowId: string, sourceIndex: number, destinationIndex: number) => {
-    updateFlowTasks(flowId, (tasks) => {
+  const reorderTasks = useCallback(async (flowId: string, sourceIndex: number, destinationIndex: number) => {
+    await updateFlowTasks(flowId, (tasks) => {
       const result = Array.from(tasks);
       const [removed] = result.splice(sourceIndex, 1);
       result.splice(destinationIndex, 0, removed);
@@ -180,5 +181,3 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
 
   return <FlowsContext.Provider value={value}>{children}</FlowsContext.Provider>;
 }
-
-    

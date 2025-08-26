@@ -5,7 +5,7 @@ import { useState, useContext, type ReactNode, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, CalendarIcon, Save } from 'lucide-react';
+import { Plus, CalendarIcon, Save, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -67,6 +67,7 @@ const WEEKDAYS = [
 
 export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { addTask, updateTask } = useContext(FlowsContext);
   const { toast } = useToast();
   const isEditMode = !!task;
@@ -106,27 +107,38 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
     }
   }, [task, open, form]);
 
-  const handleFormSubmit = (values: TaskFormValues) => {
-    const taskData = {
-      title: values.title,
-      description: values.description || '',
-      startDate: values.startDate?.toISOString(),
-      endDate: values.endDate?.toISOString(),
-      startTime: values.startTime,
-      endTime: values.endTime,
-      recurringDays: values.recurringDays,
-    };
+  const handleFormSubmit = async (values: TaskFormValues) => {
+    setIsSubmitting(true);
+    try {
+        const taskData = {
+          title: values.title,
+          description: values.description || '',
+          startDate: values.startDate?.toISOString(),
+          endDate: values.endDate?.toISOString(),
+          startTime: values.startTime,
+          endTime: values.endTime,
+          recurringDays: values.recurringDays,
+        };
 
-    if (isEditMode && task) {
-      updateTask(flowId, task.id, taskData);
-      toast({ title: 'Task Updated', description: `"${values.title}" has been updated.` });
-    } else {
-      addTask(flowId, values.title, values.description, values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime, values.recurringDays);
-      toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
+        if (isEditMode && task) {
+          await updateTask(flowId, task.id, taskData);
+          toast({ title: 'Task Updated', description: `"${values.title}" has been updated.` });
+        } else {
+          await addTask(flowId, values.title, values.description, values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime, values.recurringDays);
+          toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
+        }
+
+        form.reset();
+        setOpen(false);
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: `Task ${isEditMode ? 'update' : 'creation'} failed`,
+            description: 'Could not save the task. Please try again.',
+        });
+    } finally {
+        setIsSubmitting(false);
     }
-
-    form.reset();
-    setOpen(false);
   };
 
   return (
@@ -317,12 +329,18 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                 </div>
             </ScrollArea>
             <DialogFooter className="pt-6 border-t">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit">
-                 {isEditMode ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-                {isEditMode ? 'Save Changes' : 'Add Task'}
+              <Button type="submit" disabled={isSubmitting}>
+                 {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                 ) : isEditMode ? (
+                    <Save className="mr-2 h-4 w-4" />
+                 ) : (
+                    <Plus className="mr-2 h-4 w-4" />
+                 )}
+                {isSubmitting ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Add Task')}
               </Button>
             </DialogFooter>
           </form>
