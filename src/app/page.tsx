@@ -98,19 +98,19 @@ export default function Home() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
             <BookMarked className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold font-headline">TaskFlow</span>
+            <span className="text-lg font-bold font-headline">TaskFlow</span>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeSwitcher />
              {user && <CreateFlowDialog>
-                <Button>
+                <Button size="sm">
                     <Plus className="mr-2 h-4 w-4" />
                     New Flow
                 </Button>
             </CreateFlowDialog>}
             {user ? <UserNav /> : (
               !loading && (
-                <Button onClick={signInWithGoogle}>
+                <Button onClick={signInWithGoogle} size="sm">
                   <LogIn className="mr-2 h-4 w-4" />
                   Sign In
                 </Button>
