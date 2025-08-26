@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useContext, type ReactNode, useEffect } from 'react';
@@ -140,7 +141,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleFormSubmit)}>
-            <ScrollArea className="h-[60vh] -mx-6 px-6">
+            <ScrollArea className="h-[60vh] pr-4">
                 <div className="space-y-6 py-2">
                   <div className="space-y-4">
                     <FormField
@@ -315,7 +316,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                   </div>
                 </div>
             </ScrollArea>
-            <DialogFooter className="pt-6 -mx-6 px-6 border-t">
+            <DialogFooter className="pt-6 border-t">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Cancel
               </Button>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type ReactNode, useContext, useEffect } from 'react';
@@ -101,7 +102,7 @@ export function CreateFlowDialog({ children, flowToEdit }: CreateFlowDialogProps
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
             <FormField
               control={form.control}
               name="title"
@@ -115,7 +116,7 @@ export function CreateFlowDialog({ children, flowToEdit }: CreateFlowDialogProps
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
