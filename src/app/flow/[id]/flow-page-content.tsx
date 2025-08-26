@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TaskList } from '@/components/TaskList';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
 import { TaskReportCard } from '@/components/TaskReportCard';
+import { useToast } from '@/hooks/use-toast';
 
 
 export function FlowPageContent({ id }: { id: string }) {
@@ -21,6 +22,7 @@ export function FlowPageContent({ id }: { id: string }) {
   const [isClient, setIsClient] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
   
   const flow = useMemo(() => getFlowById(id), [getFlowById, id]);
   const reportCardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -85,6 +87,10 @@ export function FlowPageContent({ id }: { id: string }) {
 
     doc.save(`${flow.title.replace(/\s+/g, '_')}_report.pdf`);
     setIsExporting(false);
+    toast({
+      title: 'Download Complete',
+      description: `"${flow.title}_report.pdf" has been downloaded.`,
+    });
   };
   
   if (!isClient || loading) {
