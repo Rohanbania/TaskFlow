@@ -42,11 +42,8 @@ export function FlowCard({ flow }: FlowCardProps) {
   }, [flow.tasks]);
 
   return (
-    <Card className={cn(
-        "flex h-full flex-col transition-all duration-300",
-        "hover:-translate-y-1 hover:shadow-primary/20 hover:shadow-lg"
-      )}>
-      <div className="absolute right-2 top-2">
+    <Card className="card-glow flex h-full flex-col">
+      <div className="absolute right-2 top-2 z-10">
         <AlertDialog>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

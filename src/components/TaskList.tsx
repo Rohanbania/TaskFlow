@@ -62,8 +62,7 @@ export function TaskList({ flowId, tasks }: TaskListProps) {
           onDrop={(e) => handleDrop(e, task.id)}
           onDragEnd={handleDragEnd}
           className={cn(
-            'group relative flex cursor-grab items-start gap-2 rounded-lg bg-card p-4 shadow-sm transition-all duration-300',
-            'hover:shadow-primary/20 hover:shadow-lg',
+            'card-glow group relative flex cursor-grab items-start gap-2 rounded-lg bg-card p-4 shadow-sm',
             'active:cursor-grabbing',
             draggedItemId === task.id ? 'opacity-50' : 'opacity-100'
           )}
