@@ -27,6 +27,7 @@ import {
 import type { Flow } from '@/lib/types';
 import { FlowsContext } from '@/contexts/FlowsContext';
 import { CreateFlowDialog } from './CreateFlowDialog';
+import { cn } from '@/lib/utils';
 
 interface FlowCardProps {
   flow: Flow;
@@ -41,7 +42,10 @@ export function FlowCard({ flow }: FlowCardProps) {
   }, [flow.tasks]);
 
   return (
-    <Card className="flex h-full flex-col transition-all hover:shadow-lg hover:-translate-y-1">
+    <Card className={cn(
+        "flex h-full flex-col transition-all duration-300",
+        "hover:-translate-y-1 hover:shadow-primary/20 hover:shadow-lg"
+      )}>
       <div className="absolute right-2 top-2">
         <AlertDialog>
           <DropdownMenu>
