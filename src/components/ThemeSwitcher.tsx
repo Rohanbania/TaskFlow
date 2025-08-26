@@ -18,23 +18,25 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 
-const COLOR_THEMES = ['zinc', 'orange', 'green', 'blue', 'rose', 'violet'];
+const COLOR_THEMES = ['zinc', 'orange', 'rose'];
 
 export function ThemeSwitcher() {
-  const { setTheme: setMode, resolvedTheme } = useTheme()
-  const [colorTheme, setColorTheme] = React.useState<string>('zinc');
+  const { setTheme: setMode, theme: mode } = useTheme()
+  const [colorTheme, setColorTheme] = React.useState<string>('');
 
   React.useEffect(() => {
-    const storedTheme = localStorage.getItem("color-theme");
-    if (storedTheme && COLOR_THEMES.includes(storedTheme)) {
-      setColorTheme(storedTheme);
-    }
+    // This effect runs once on mount to get the stored color theme
+    const storedTheme = localStorage.getItem("color-theme") || 'zinc';
+    setColorTheme(storedTheme);
   }, []);
 
   React.useEffect(() => {
-    document.documentElement.classList.remove(...COLOR_THEMES.map(t => `theme-${t}`));
-    document.documentElement.classList.add(`theme-${colorTheme}`);
-    localStorage.setItem("color-theme", colorTheme);
+    // This effect runs whenever colorTheme changes
+    if (typeof window !== 'undefined' && colorTheme) {
+      document.documentElement.classList.remove(...COLOR_THEMES.map(t => `theme-${t}`));
+      document.documentElement.classList.add(`theme-${colorTheme}`);
+      localStorage.setItem("color-theme", colorTheme);
+    }
   }, [colorTheme]);
 
   return (
