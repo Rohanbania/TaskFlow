@@ -294,9 +294,9 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                         <FormItem>
                           <FormLabel>Repeat on</FormLabel>
                           <FormControl>
-                             <ToggleGroup 
+                             <ToggleGroup
                                 type="multiple"
-                                variant="outline" 
+                                variant="outline"
                                 className="flex-wrap justify-start gap-2"
                                 value={field.value?.map(String)}
                                 onValueChange={(value) => field.onChange(value.map(Number))}
@@ -304,7 +304,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                                 {WEEKDAYS.map(day => (
                                     <ToggleGroupItem key={day.value} value={String(day.value)} aria-label={`Toggle ${day.label}`} className="w-10 h-10">
                                         {day.label}
-                                    </TogglseGroupItem>
+                                    </ToggleGroupItem>
                                 ))}
                             </ToggleGroup>
                           </FormControl>
