@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   description: 'A unique to-do list application',
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
+ <link rel="icon" href="/download.png" sizes="any" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

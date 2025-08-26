@@ -116,11 +116,11 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
       recurringDays: values.recurringDays,
     };
 
-    if (isEditMode) {
+    if (isEditMode && task) {
       updateTask(flowId, task.id, taskData);
       toast({ title: 'Task Updated', description: `"${values.title}" has been updated.` });
     } else {
-      addTask(flowId, values.title, values.description || '', values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime, values.recurringDays);
+      addTask(flowId, values.title, values.description, values.startDate?.toISOString(), values.endDate?.toISOString(), values.startTime, values.endTime, values.recurringDays);
       toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
     }
 
@@ -174,7 +174,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                   <Separator />
 
                   <div className="space-y-4">
-                     <h3 className="text-sm font-medium text-muted-foreground">Scheduling</h3>
+                     <h3 className="text-sm font-medium text-muted-foreground">Scheduling (Optional)</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
