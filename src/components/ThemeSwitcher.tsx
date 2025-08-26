@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun, Palette } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
@@ -10,10 +10,32 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 
+const COLOR_THEMES = ['zinc', 'orange', 'green', 'blue', 'rose', 'violet'];
+
 export function ThemeSwitcher() {
-  const { setTheme } = useTheme()
+  const { setTheme: setMode, resolvedTheme } = useTheme()
+  const [colorTheme, setColorTheme] = React.useState<string>('zinc');
+
+  React.useEffect(() => {
+    const storedTheme = localStorage.getItem("color-theme");
+    if (storedTheme && COLOR_THEMES.includes(storedTheme)) {
+      setColorTheme(storedTheme);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    document.documentElement.classList.remove(...COLOR_THEMES.map(t => `theme-${t}`));
+    document.documentElement.classList.add(`theme-${colorTheme}`);
+    localStorage.setItem("color-theme", colorTheme);
+  }, [colorTheme]);
 
   return (
     <DropdownMenu>
@@ -25,15 +47,27 @@ export function ThemeSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
+        <DropdownMenuLabel>Mode</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => setMode("light")}>
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
+        <DropdownMenuItem onClick={() => setMode("dark")}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
+        <DropdownMenuItem onClick={() => setMode("system")}>
           System
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Color</DropdownMenuLabel>
+        {COLOR_THEMES.map((theme) => (
+          <DropdownMenuItem
+            key={theme}
+            onClick={() => setColorTheme(theme)}
+            className="capitalize"
+          >
+            {theme}
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -3,7 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { FlowsProvider } from '@/contexts/FlowsContext';
 import { Toaster } from '@/components/ui/toaster';
-import { ThemeProvider } from '@/components/ThemeProvider';
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata: Metadata = {
@@ -32,7 +32,7 @@ export default function RootLayout({
           'bg-background text-foreground'
         )}
       >
-        <ThemeProvider
+        <NextThemesProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
@@ -44,7 +44,7 @@ export default function RootLayout({
               <Toaster />
             </FlowsProvider>
           </AuthProvider>
-        </ThemeProvider>
+        </NextThemesProvider>
       </body>
     </html>
   );
