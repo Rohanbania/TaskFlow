@@ -23,24 +23,23 @@ export function ThemeSwitcher() {
   React.useEffect(() => {
     const storedTheme = localStorage.getItem("color-theme");
     if (storedTheme && COLOR_THEMES.includes(storedTheme)) {
-        document.documentElement.classList.add(`theme-${storedTheme}`);
+        document.body.classList.add(`theme-${storedTheme}`);
     } else {
         // default to zinc if nothing is stored
-        document.documentElement.classList.add('theme-zinc');
+        document.body.classList.add('theme-zinc');
+        localStorage.setItem("color-theme", "zinc");
     }
   }, []);
 
   const handleColorChange = (theme: string) => {
-    if (typeof window !== 'undefined') {
       // Remove all existing color theme classes
       COLOR_THEMES.forEach(t => {
-        document.documentElement.classList.remove(`theme-${t}`);
+        document.body.classList.remove(`theme-${t}`);
       });
       // Add the new one
-      document.documentElement.classList.add(`theme-${theme}`);
+      document.body.classList.add(`theme-${theme}`);
       // Save the choice to localStorage
       localStorage.setItem("color-theme", theme);
-    }
   };
 
   return (
