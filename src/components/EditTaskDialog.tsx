@@ -5,7 +5,7 @@ import { useState, useContext, type ReactNode, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, CalendarIcon, Save, Loader2 } from 'lucide-react';
+import { Plus, Save, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,23 +28,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { FlowsContext } from '@/contexts/FlowsContext';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Calendar } from './ui/calendar';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
 import type { Task } from '@/lib/types';
-import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
+
 
 const taskFormSchema = z.object({
   title: z.string().min(1, { message: 'Title is required' }),
   description: z.string().optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
-  recurringDays: z.array(z.number()).optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -54,16 +44,6 @@ interface EditTaskDialogProps {
   flowId: string;
   task?: Task; // Make task optional for adding new tasks
 }
-
-const WEEKDAYS = [
-    { label: 'S', value: 0 },
-    { label: 'M', value: 1 },
-    { label: 'T', value: 2 },
-    { label: 'W', value: 3 },
-    { label: 'T', value: 4 },
-    { label: 'F', value: 5 },
-    { label: 'S', value: 6 },
-]
 
 export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) {
   const [open, setOpen] = useState(false);
@@ -77,9 +57,6 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
     defaultValues: {
       title: '',
       description: '',
-      startTime: '',
-      endTime: '',
-      recurringDays: [],
     },
   });
 
@@ -88,21 +65,11 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
       form.reset({
         title: task.title,
         description: task.description,
-        startDate: task.startDate ? new Date(task.startDate) : undefined,
-        endDate: task.endDate ? new Date(task.endDate) : undefined,
-        startTime: task.startTime,
-        endTime: task.endTime,
-        recurringDays: task.recurringDays || [],
       });
     } else if (!task && open) {
        form.reset({
         title: '',
         description: '',
-        startDate: undefined,
-        endDate: undefined,
-        startTime: '',
-        endTime: '',
-        recurringDays: [],
       });
     }
   }, [task, open, form]);
@@ -113,47 +80,28 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
         const taskData: Partial<Task> = {
           title: values.title,
           description: values.description || '',
-          startDate: values.startDate?.toISOString(),
-          endDate: values.endDate?.toISOString(),
-          startTime: values.startTime,
-          endTime: values.endTime,
-          recurringDays: values.recurringDays,
         };
         
-        // Remove undefined properties to avoid Firestore errors
-        Object.keys(taskData).forEach(key => {
-          const taskKey = key as keyof Partial<Task>;
-          if (taskData[taskKey] === undefined || taskData[taskKey] === '') {
-            delete taskData[taskKey];
-          }
-        });
-
-
         if (isEditMode && task) {
           await updateTask(flowId, task.id, taskData);
           toast({ title: 'Task Updated', description: `"${values.title}" has been updated.` });
         } else {
-          // The addTask function expects specific arguments, not an object
           await addTask(
             flowId,
             values.title,
-            values.description,
-            values.startDate?.toISOString(),
-            values.endDate?.toISOString(),
-            values.startTime,
-            values.endTime,
-            values.recurringDays
+            values.description || '',
           );
           toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
         }
 
         form.reset();
         setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Failed to save task", error);
         toast({
             variant: 'destructive',
-            title: 'Failed to save task',
-            description: 'Please add all data',
+            title: 'Error saving task',
+            description: 'Failed to save task. Please add all data.',
         });
     } finally {
         setIsSubmitting(false);
@@ -166,6 +114,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">{isEditMode ? 'Edit Task' : 'Add New Task'}</DialogTitle>
+
           <DialogDescription>
              {isEditMode ? "Update the details for your task below." : "Fill in the details for your new task below. Click save when you're done."}
           </DialogDescription>
@@ -202,149 +151,6 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                       )}
                     />
                   </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                     <h3 className="text-sm font-medium text-muted-foreground">Scheduling</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="startDate"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                              <FormLabel>Start Date</FormLabel>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant={"outline"}
-                                      className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                    >
-                                      <CalendarIcon className="mr-2 h-4 w-4" />
-                                      {field.value ? (
-                                        format(field.value, "PPP")
-                                      ) : (
-                                        <span>Pick a date</span>
-                                      )}
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                      date < new Date(new Date().setHours(0,0,0,0))
-                                    }
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                         <FormField
-                          control={form.control}
-                          name="endDate"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                              <FormLabel>End Date</FormLabel>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant={"outline"}
-                                      className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                    >
-                                      <CalendarIcon className="mr-2 h-4 w-4" />
-                                      {field.value ? (
-                                        format(field.value, "PPP")
-                                      ) : (
-                                        <span>Pick a date</span>
-                                      )}
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                       date < (form.getValues('startDate') || new Date(new Date().setHours(0,0,0,0)))
-                                    }
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                         <FormField
-                          control={form.control}
-                          name="startTime"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Start Time</FormLabel>
-                              <FormControl>
-                                <Input type="time" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="endTime"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>End Time</FormLabel>
-                              <FormControl>
-                                <Input type="time" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <FormField
-                      control={form.control}
-                      name="recurringDays"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Repeat on</FormLabel>
-                          <FormControl>
-                             <ToggleGroup
-                                type="multiple"
-                                variant="outline"
-                                className="flex-wrap justify-start gap-2"
-                                value={field.value?.map(String)}
-                                onValueChange={(value) => field.onChange(value.map(Number))}
-                              >
-                                {WEEKDAYS.map(day => (
-                                    <ToggleGroupItem key={day.value} value={String(day.value)} aria-label={`Toggle ${day.label}`} className="w-10 h-10">
-                                        {day.label}
-                                    </ToggleGroupItem>
-                                ))}
-                            </ToggleGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </div>
             </ScrollArea>
             <DialogFooter className="pt-6 border-t">
@@ -368,5 +174,3 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
     </Dialog>
   );
 }
-
-    

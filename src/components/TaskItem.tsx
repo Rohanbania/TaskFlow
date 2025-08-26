@@ -1,7 +1,8 @@
+
 'use client';
 
-import { useContext, useState, useEffect, useRef } from 'react';
-import { MoreVertical, Trash2, Wand2, Clock, AlertTriangle, Calendar, Timer, BarChart2, Radio, Pencil, CheckCircle, Repeat, Pin } from 'lucide-react';
+import { useContext, useState, useEffect, useMemo } from 'react';
+import { MoreVertical, Trash2, Wand2, BarChart2, Pencil } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,174 +27,35 @@ import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { SuggestResourcesDialog } from './SuggestResourcesDialog';
 import { Badge } from './ui/badge';
-import { format, formatDistanceToNow, isWithinInterval } from 'date-fns';
 import { TaskAnalyticsDialog } from './TaskAnalyticsDialog';
 import { EditTaskDialog } from './EditTaskDialog';
+import { format, startOfDay } from 'date-fns';
 
 interface TaskItemProps {
   flowId: string;
   task: Task;
 }
 
-const WEEKDAY_MAP = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
 export function TaskItem({ flowId, task }: TaskItemProps) {
-  const { updateTask, deleteTask } = useContext(FlowsContext);
+  const { deleteTask, toggleTaskCompletion } = useContext(FlowsContext);
   const [isResourcesDialogOpen, setIsResourcesDialogOpen] = useState(false);
   const [isAnalyticsDialogOpen, setIsAnalyticsDialogOpen] = useState(false);
-  const [isOverdue, setIsOverdue] = useState(false);
-  const [isLive, setIsLive] = useState(false);
-  const [isToday, setIsToday] = useState(false);
-  const [hasEnded, setHasEnded] = useState(false);
-  const [countdown, setCountdown] = useState('');
-  const notificationSentRef = useRef(false);
 
-  useEffect(() => {
-    const checkStatus = () => {
-      const now = new Date();
-      
-      const taskStartDate = task.startDate ? new Date(task.startDate) : null;
-      if (taskStartDate) taskStartDate.setHours(0, 0, 0, 0);
-  
-      const taskEndDate = task.endDate ? new Date(task.endDate) : null;
-      if (taskEndDate) taskEndDate.setHours(23, 59, 59, 999);
-  
-      let isScheduledForToday = false;
-      const todayWeekday = now.getDay();
-  
-      if (task.recurringDays && task.recurringDays.length > 0) {
-        if (task.recurringDays.includes(todayWeekday)) {
-          if ((!taskStartDate || now >= taskStartDate) && (!taskEndDate || now <= taskEndDate)) {
-            isScheduledForToday = true;
-          }
-        }
-      } else if (taskStartDate) {
-        const singleTaskEndDate = taskEndDate || taskStartDate;
-        if (isWithinInterval(now, { start: taskStartDate, end: singleTaskEndDate })) {
-          isScheduledForToday = true;
-        }
-      } else {
-        isScheduledForToday = true;
-      }
-      setIsToday(isScheduledForToday && !task.completed);
-  
-      if (!isScheduledForToday) {
-        setIsLive(false);
-        setIsOverdue(false);
-        setHasEnded(false);
-        setCountdown('');
-        notificationSentRef.current = false; // Reset notification status for next day
-        return;
-      }
-  
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      if (task.startTime) {
-        const [hours, minutes] = task.startTime.split(':');
-        todayStart.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-      }
-  
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
-      if (task.endTime) {
-        const [hours, minutes] = task.endTime.split(':');
-        todayEnd.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-      } else {
-        todayEnd.setHours(0,0,0,0);
-        todayEnd.setDate(todayEnd.getDate() + 1);
-      }
-  
-      const live = !task.completed && isWithinInterval(now, { start: todayStart, end: todayEnd });
-      const overdue = !task.completed && now > todayEnd;
-      const ended = !!(task.completed || now > todayEnd);
-  
-      if (live && !notificationSentRef.current) {
-        if (Notification.permission === 'granted') {
-          new Notification('Task Started!', {
-            body: `It's time for: "${task.title}"`,
-            icon: '/bell.png' // You can add an icon for notifications
-          });
-        }
-        notificationSentRef.current = true;
-      }
+  const isCompletedToday = useMemo(() => {
+    const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
+    return task.completedDates?.includes(todayStr);
+  }, [task.completedDates]);
 
-      setIsLive(live);
-      setIsOverdue(overdue);
-      setHasEnded(ended);
-  
-      if (!live && !ended && task.startTime && now < todayStart) {
-        const totalSeconds = Math.floor((todayStart.getTime() - now.getTime()) / 1000);
-        if (totalSeconds > 0) {
-          const hours = Math.floor(totalSeconds / 3600);
-          const minutes = Math.floor((totalSeconds % 3600) / 60);
-          const seconds = totalSeconds % 60;
-          setCountdown(
-            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-          );
-        } else {
-          setCountdown('');
-        }
-      } else {
-        setCountdown('');
-      }
-
-      if(ended) {
-        notificationSentRef.current = false;
-      }
-    };
-  
-    checkStatus();
-    const interval = setInterval(checkStatus, 1000);
-  
-    return () => clearInterval(interval);
-  }, [task]);
-
-
-  const handleCheckedChange = (checked: boolean) => {
-    updateTask(flowId, task.id, { completed: checked, completionDate: checked ? new Date().toISOString() : undefined });
+  const handleCheckedChange = () => {
+    toggleTaskCompletion(flowId, task.id);
   };
-
-  const formatDateRange = () => {
-    const startDate = task.startDate ? new Date(task.startDate) : null;
-    const endDate = task.endDate ? new Date(task.endDate) : null;
-
-    if (startDate && endDate) {
-      const adjustedStartDate = new Date(startDate.getTime() + startDate.getTimezoneOffset() * 60000);
-      const adjustedEndDate = new Date(endDate.getTime() + endDate.getTimezoneOffset() * 60000);
-
-      if (adjustedStartDate.toDateString() === adjustedEndDate.toDateString()) {
-         return format(adjustedStartDate, "PPP");
-      }
-      return `${format(adjustedStartDate, "PPP")} - ${format(adjustedEndDate, "PPP")}`;
-    }
-    if (startDate) {
-      const adjustedStartDate = new Date(startDate.getTime() + startDate.getTimezoneOffset() * 60000);
-      return `Starts ${format(adjustedStartDate, "PPP")}`;
-    }
-     if (endDate) {
-      const adjustedEndDate = new Date(endDate.getTime() + endDate.getTimezoneOffset() * 60000);
-      return `Ends ${format(adjustedEndDate, "PPP")}`;
-    }
-    return null;
-  }
-
-  const formatRecurringDays = () => {
-    if (!task.recurringDays || task.recurringDays.length === 0) return null;
-    if (task.recurringDays.length === 7) return 'Everyday';
-    
-    const sortedDays = [...task.recurringDays].sort();
-    if (JSON.stringify(sortedDays) === JSON.stringify([1,2,3,4,5])) return 'Weekdays';
-    if (JSON.stringify(sortedDays) === JSON.stringify([0,6])) return 'Weekends';
-
-    return sortedDays.map(day => WEEKDAY_MAP[day]).join(', ');
-  }
 
   return (
     <div className="flex w-full items-start justify-between gap-4">
       <div className="flex items-start gap-4">
         <Checkbox
           id={`task-${task.id}`}
-          checked={task.completed}
+          checked={isCompletedToday}
           onCheckedChange={handleCheckedChange}
           className="mt-1 h-5 w-5 flex-shrink-0"
           aria-labelledby={`task-title-${task.id}`}
@@ -204,7 +66,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             htmlFor={`task-${task.id}`}
             className={cn(
               'font-medium transition-colors',
-              task.completed ? 'text-muted-foreground line-through' : 'text-card-foreground'
+              isCompletedToday ? 'text-muted-foreground line-through' : 'text-card-foreground'
             )}
           >
             {task.title}
@@ -212,69 +74,11 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
           {task.description && (
             <p className={cn(
               'text-sm text-muted-foreground',
-              task.completed && 'line-through'
+              isCompletedToday && 'line-through'
             )}>
               {task.description}
             </p>
           )}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            {(task.startDate || task.endDate) && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    <span>{formatDateRange()}</span>
-                </div>
-            )}
-            {formatRecurringDays() && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Repeat className="h-3 w-3" />
-                    <span>{formatRecurringDays()}</span>
-                </div>
-            )}
-            {(task.startTime || task.endTime) && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span>
-                  {task.startTime || '...'} - {task.endTime || '...'}
-                </span>
-              </div>
-            )}
-            {isToday && !isLive && !countdown && (
-                <Badge variant="outline" className="gap-1 text-xs border-primary text-primary">
-                    <Pin className="h-3 w-3" />
-                    Today
-                </Badge>
-            )}
-            {isLive && (
-              <Badge variant="default" className="gap-1 text-xs animate-pulse bg-green-600 hover:bg-green-700">
-                <Radio className="h-3 w-3" />
-                Live
-              </Badge>
-            )}
-            {isOverdue && (
-               <Badge variant="destructive" className="gap-1 text-xs">
-                <AlertTriangle className="h-3 w-3" />
-                Overtime
-              </Badge>
-            )}
-            {hasEnded && !isLive && !isOverdue && !task.completed && (
-              <Badge variant="outline" className="gap-1 text-xs">
-                <CheckCircle className="h-3 w-3 text-muted-foreground" />
-                Ended
-              </Badge>
-            )}
-             {task.completed && (
-              <Badge variant="outline" className="gap-1 text-xs text-green-600 border-green-500">
-                <CheckCircle className="h-3 w-3" />
-                Completed
-              </Badge>
-            )}
-            {countdown && !isLive && !task.completed && (
-              <Badge variant="secondary" className="gap-1 text-xs">
-                <Timer className="h-3 w-3" />
-                Starts in {countdown}
-              </Badge>
-            )}
-          </div>
         </div>
       </div>
 
@@ -343,5 +147,3 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     </div>
   );
 }
-
-    

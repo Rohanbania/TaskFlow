@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -28,6 +29,8 @@ import type { Flow } from '@/lib/types';
 import { FlowsContext } from '@/contexts/FlowsContext';
 import { CreateFlowDialog } from './CreateFlowDialog';
 import { cn } from '@/lib/utils';
+import { format, startOfDay } from 'date-fns';
+
 
 interface FlowCardProps {
   flow: Flow;
@@ -35,11 +38,18 @@ interface FlowCardProps {
 
 export function FlowCard({ flow }: FlowCardProps) {
   const { deleteFlow } = useContext(FlowsContext);
+  
+  const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
+  
   const progress = useMemo(() => {
     if (flow.tasks.length === 0) return 0;
-    const completedTasks = flow.tasks.filter((task) => task.completed).length;
-    return (completedTasks / flow.tasks.length) * 100;
-  }, [flow.tasks]);
+    const completedToday = flow.tasks.filter((task) => task.completedDates?.includes(todayStr)).length;
+    return (completedToday / flow.tasks.length) * 100;
+  }, [flow.tasks, todayStr]);
+
+  const completedTodayCount = useMemo(() => {
+     return flow.tasks.filter((task) => task.completedDates?.includes(todayStr)).length;
+  }, [flow.tasks, todayStr]);
 
   return (
     <Card className="card-glow flex h-full flex-col">
@@ -91,7 +101,7 @@ export function FlowCard({ flow }: FlowCardProps) {
         <CardContent className="flex flex-grow flex-col justify-end">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              {flow.tasks.filter((t) => t.completed).length} / {flow.tasks.length} tasks completed
+              {completedTodayCount} / {flow.tasks.length} tasks completed today
             </p>
             <Progress value={progress} aria-label={`${progress.toFixed(0)}% complete`} />
           </div>

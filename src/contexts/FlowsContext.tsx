@@ -6,6 +6,7 @@ import type { Flow, Task } from '@/lib/types';
 import { AuthContext } from './AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, doc, onSnapshot, writeBatch, query, orderBy, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { format, startOfDay } from 'date-fns';
 
 interface FlowsContextType {
   flows: Flow[];
@@ -14,10 +15,11 @@ interface FlowsContextType {
   updateFlow: (flowId: string, updates: Partial<Omit<Flow, 'id' | 'tasks'>>) => Promise<void>;
   deleteFlow: (flowId: string) => Promise<void>;
   getFlowById: (flowId: string) => Flow | undefined;
-  addTask: (flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, recurringDays?: number[]) => Promise<void>;
+  addTask: (flowId: string, taskTitle: string, taskDescription: string) => Promise<void>;
   updateTask: (flowId: string, taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (flowId: string, taskId: string) => Promise<void>;
   reorderTasks: (flowId: string, sourceIndex: number, destinationIndex: number) => Promise<void>;
+  toggleTaskCompletion: (flowId: string, taskId: string) => Promise<void>;
 }
 
 export const FlowsContext = createContext<FlowsContextType>({
@@ -31,6 +33,7 @@ export const FlowsContext = createContext<FlowsContextType>({
   updateTask: async () => {},
   deleteTask: async () => {},
   reorderTasks: async () => {},
+  toggleTaskCompletion: async () => {},
 });
 
 export function FlowsProvider({ children }: { children: ReactNode }) {
@@ -55,7 +58,10 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
             userFlows.push({
                 id: doc.id,
                 title: data.title,
-                tasks: data.tasks || [],
+                tasks: (data.tasks || []).map((task: any) => ({
+                    ...task,
+                    completedDates: task.completedDates || [], // Ensure completedDates is always an array
+                })),
                 createdAt: data.createdAt
             } as Flow);
         });
@@ -78,8 +84,7 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
       id: doc(collection(db, `users/${user.uid}/flows/${newFlowRef.id}/tasks`)).id,
       title: taskTitle,
       description: '',
-      completed: false,
-      recurringDays: [],
+      completedDates: [],
     }));
 
     const newFlowData = {
@@ -121,17 +126,12 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     await updateDoc(flowRef, { tasks: updatedTasks });
   }, [user, flows]);
 
-  const addTask = useCallback(async (flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, recurringDays?: number[]) => {
+  const addTask = useCallback(async (flowId: string, taskTitle: string, taskDescription: string) => {
     const newTask: Task = {
       id: doc(collection(db, `users/${user?.uid}/flows/${flowId}/tasks`)).id,
       title: taskTitle,
       description: taskDescription,
-      completed: false,
-      startDate,
-      endDate,
-      startTime,
-      endTime,
-      recurringDays,
+      completedDates: [],
     };
     await updateFlowTasks(flowId, (tasks) => [...tasks, newTask]);
   }, [updateFlowTasks, user]);
@@ -141,17 +141,41 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
       tasks.map((task) => {
         if (task.id === taskId) {
           const updatedTask = { ...task, ...updates };
-          if (updates.completed === true && !task.completed) {
-            updatedTask.completionDate = new Date().toISOString();
-          } else if (updates.completed === false) {
-            delete updatedTask.completionDate;
-          }
+           // Ensure undefined fields are handled correctly
+          Object.keys(updatedTask).forEach(key => {
+            const taskKey = key as keyof Partial<Task>;
+            if (updatedTask[taskKey] === undefined) {
+              delete (updatedTask as any)[taskKey];
+            }
+          });
           return updatedTask;
         }
         return task;
       })
     );
   }, [updateFlowTasks]);
+  
+  const toggleTaskCompletion = useCallback(async (flowId: string, taskId: string) => {
+    const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
+    await updateFlowTasks(flowId, (tasks) => 
+       tasks.map(task => {
+         if (task.id === taskId) {
+           const completedDates = task.completedDates || [];
+           const isCompletedToday = completedDates.includes(todayStr);
+           let newCompletedDates;
+           if(isCompletedToday) {
+             newCompletedDates = completedDates.filter(d => d !== todayStr);
+           } else {
+             newCompletedDates = [...completedDates, todayStr];
+           }
+           return { ...task, completedDates: newCompletedDates };
+         }
+         return task;
+       })
+    );
+
+  }, [updateFlowTasks]);
+
 
   const deleteTask = useCallback(async (flowId: string, taskId: string) => {
     await updateFlowTasks(flowId, (tasks) => tasks.filter((task) => task.id !== taskId));
@@ -177,6 +201,7 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     updateTask,
     deleteTask,
     reorderTasks,
+    toggleTaskCompletion,
   };
 
   return <FlowsContext.Provider value={value}>{children}</FlowsContext.Provider>;
