@@ -2,7 +2,7 @@
 'use client';
 
 import { useContext, useState, useEffect, useMemo } from 'react';
-import { MoreVertical, Trash2, Wand2, BarChart2, Pencil } from 'lucide-react';
+import { MoreVertical, Trash2, Wand2, BarChart2, Pencil, Clock } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,7 +29,7 @@ import { SuggestResourcesDialog } from './SuggestResourcesDialog';
 import { Badge } from './ui/badge';
 import { TaskAnalyticsDialog } from './TaskAnalyticsDialog';
 import { EditTaskDialog } from './EditTaskDialog';
-import { format, startOfDay } from 'date-fns';
+import { format, startOfDay, parse } from 'date-fns';
 
 interface TaskItemProps {
   flowId: string;
@@ -49,6 +49,14 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   const handleCheckedChange = () => {
     toggleTaskCompletion(flowId, task.id);
   };
+  
+  const formatTime = (timeStr: string) => {
+      try {
+        return format(parse(timeStr, 'HH:mm', new Date()), 'h:mm a');
+      } catch (e) {
+        return 'Invalid Time'
+      }
+  }
 
   return (
     <div className="flex w-full items-start justify-between gap-4">
@@ -78,6 +86,12 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             )}>
               {task.description}
             </p>
+          )}
+           {task.startTime && task.endTime && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>{formatTime(task.startTime)} - {formatTime(task.endTime)}</span>
+            </div>
           )}
         </div>
       </div>

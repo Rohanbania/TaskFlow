@@ -35,6 +35,8 @@ import type { Task } from '@/lib/types';
 const taskFormSchema = z.object({
   title: z.string().min(1, { message: 'Title is required' }),
   description: z.string().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -57,6 +59,8 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
     defaultValues: {
       title: '',
       description: '',
+      startTime: '',
+      endTime: '',
     },
   });
 
@@ -65,11 +69,15 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
       form.reset({
         title: task.title,
         description: task.description,
+        startTime: task.startTime,
+        endTime: task.endTime,
       });
     } else if (!task && open) {
        form.reset({
         title: '',
         description: '',
+        startTime: '',
+        endTime: '',
       });
     }
   }, [task, open, form]);
@@ -80,6 +88,8 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
         const taskData: Partial<Task> = {
           title: values.title,
           description: values.description || '',
+          startTime: values.startTime || '',
+          endTime: values.endTime || '',
         };
         
         if (isEditMode && task) {
@@ -90,6 +100,8 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
             flowId,
             values.title,
             values.description || '',
+            values.startTime || '',
+            values.endTime || ''
           );
           toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
         }
@@ -151,6 +163,39 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                       )}
                     />
                   </div>
+                  
+                  <div className="space-y-4">
+                     <h3 className="text-sm font-medium text-muted-foreground">Daily Time Window</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                         <FormField
+                          control={form.control}
+                          name="startTime"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Start Time</FormLabel>
+                              <FormControl>
+                                <Input type="time" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                         <FormField
+                          control={form.control}
+                          name="endTime"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>End Time</FormLabel>
+                              <FormControl>
+                                <Input type="time" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                  </div>
+
                 </div>
             </ScrollArea>
             <DialogFooter className="pt-6 border-t">

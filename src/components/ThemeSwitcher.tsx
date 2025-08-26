@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 
-const COLOR_THEMES = ['zinc', 'orange', 'rose'];
+const COLOR_THEMES = ['zinc', 'orange', 'rose', 'blue'];
 
 export function ThemeSwitcher() {
   const { setTheme, theme } = useTheme()

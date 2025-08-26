@@ -15,7 +15,7 @@ interface FlowsContextType {
   updateFlow: (flowId: string, updates: Partial<Omit<Flow, 'id' | 'tasks'>>) => Promise<void>;
   deleteFlow: (flowId: string) => Promise<void>;
   getFlowById: (flowId: string) => Flow | undefined;
-  addTask: (flowId: string, taskTitle: string, taskDescription: string) => Promise<void>;
+  addTask: (flowId: string, taskTitle: string, taskDescription: string, startTime?: string, endTime?: string) => Promise<void>;
   updateTask: (flowId: string, taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (flowId: string, taskId: string) => Promise<void>;
   reorderTasks: (flowId: string, sourceIndex: number, destinationIndex: number) => Promise<void>;
@@ -126,12 +126,14 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     await updateDoc(flowRef, { tasks: updatedTasks });
   }, [user, flows]);
 
-  const addTask = useCallback(async (flowId: string, taskTitle: string, taskDescription: string) => {
+  const addTask = useCallback(async (flowId: string, taskTitle: string, taskDescription: string, startTime?: string, endTime?: string) => {
     const newTask: Task = {
       id: doc(collection(db, `users/${user?.uid}/flows/${flowId}/tasks`)).id,
       title: taskTitle,
       description: taskDescription,
       completedDates: [],
+      startTime,
+      endTime,
     };
     await updateFlowTasks(flowId, (tasks) => [...tasks, newTask]);
   }, [updateFlowTasks, user]);

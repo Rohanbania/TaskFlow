@@ -4,6 +4,8 @@ export interface Task {
   title: string;
   description: string;
   completedDates: string[]; // e.g., ["2024-07-29", "2024-07-30"]
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface Flow {
