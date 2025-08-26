@@ -150,7 +150,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
 
 
   const handleCheckedChange = (checked: boolean) => {
-    updateTask(flowId, task.id, { completed: checked });
+    updateTask(flowId, task.id, { completed: checked, completionDate: checked ? new Date().toISOString() : undefined });
   };
 
   const formatDateRange = () => {
@@ -238,14 +238,14 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
                 </span>
               </div>
             )}
-            {isToday && !isLive && (
-                <Badge variant="outline" className="gap-1 text-xs border-blue-500 text-blue-600">
+            {isToday && !isLive && !countdown && (
+                <Badge variant="outline" className="gap-1 text-xs border-primary text-primary">
                     <Pin className="h-3 w-3" />
                     Today
                 </Badge>
             )}
             {isLive && (
-              <Badge variant="default" className="gap-1 text-xs animate-pulse bg-green-600">
+              <Badge variant="default" className="gap-1 text-xs animate-pulse bg-green-600 hover:bg-green-700">
                 <Radio className="h-3 w-3" />
                 Live
               </Badge>
@@ -258,13 +258,13 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             )}
             {hasEnded && !isLive && !isOverdue && !task.completed && (
               <Badge variant="outline" className="gap-1 text-xs">
-                <CheckCircle className="h-3 w-3 text-green-600" />
+                <CheckCircle className="h-3 w-3 text-muted-foreground" />
                 Ended
               </Badge>
             )}
              {task.completed && (
-              <Badge variant="outline" className="gap-1 text-xs">
-                <CheckCircle className="h-3 w-3 text-green-600" />
+              <Badge variant="outline" className="gap-1 text-xs text-green-600 border-green-500">
+                <CheckCircle className="h-3 w-3" />
                 Completed
               </Badge>
             )}
@@ -343,3 +343,5 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     </div>
   );
 }
+
+    
