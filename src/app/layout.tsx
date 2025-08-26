@@ -9,6 +9,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 export const metadata: Metadata = {
   title: 'TaskFlow',
   description: 'A unique to-do list application',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
