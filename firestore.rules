@@ -2,9 +2,19 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read and write to their own documents.
-    match /users/{userId}/{document=**} {
+    match /users/{userId} {
+      // Allow a user to read and write their own user document
       allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /flows/{flowId} {
+        // Allow user to CUD their own flows
+        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+        // Allow user to read their own flows
+        allow get: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Allow user to list their own flows
+      allow list: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
