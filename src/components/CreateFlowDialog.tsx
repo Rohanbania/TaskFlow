@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, Wand2, Plus, Save } from 'lucide-react';
+import { Loader2, Plus, Save } from 'lucide-react';
 
 import {
   Dialog,
@@ -19,16 +19,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { generateTasksFromTitleAction } from '@/lib/actions';
 import { FlowsContext } from '@/contexts/FlowsContext';
 import type { Flow } from '@/lib/types';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters long.' }),
-  generateTasks: z.boolean().default(false),
 });
 
 type CreateFlowFormValues = z.infer<typeof formSchema>;
@@ -50,7 +46,6 @@ export function CreateFlowDialog({ children, flowToEdit }: CreateFlowDialogProps
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
-      generateTasks: false,
     },
   });
   
@@ -58,12 +53,10 @@ export function CreateFlowDialog({ children, flowToEdit }: CreateFlowDialogProps
     if (flowToEdit && open) {
       form.reset({
         title: flowToEdit.title,
-        generateTasks: false, // Don't generate tasks in edit mode
       });
     } else if (!isEditMode && open) {
       form.reset({
         title: '',
-        generateTasks: false,
       });
     }
   }, [flowToEdit, open, form, isEditMode]);
@@ -79,25 +72,7 @@ export function CreateFlowDialog({ children, flowToEdit }: CreateFlowDialogProps
                 description: `Successfully renamed to "${values.title}".`,
             });
         } else {
-            let generatedTasks: string[] = [];
-            if (values.generateTasks) {
-                const result = await generateTasksFromTitleAction(values.title);
-                if (result.success && result.data) {
-                generatedTasks = result.data;
-                toast({
-                    title: 'AI Magic ✨',
-                    description: `Successfully generated ${generatedTasks.length} tasks for your new flow.`,
-                });
-                } else {
-                toast({
-                    variant: 'destructive',
-                    title: 'AI Task Generation Failed',
-                    description: result.error || 'Could not generate tasks. Please try again.',
-                });
-                }
-            }
-            
-            const newFlowId = await addFlow(values.title, generatedTasks);
+            const newFlowId = await addFlow(values.title);
             router.push(`/flow/${newFlowId}`);
         }
       
@@ -140,28 +115,6 @@ export function CreateFlowDialog({ children, flowToEdit }: CreateFlowDialogProps
                 </FormItem>
               )}
             />
-             {!isEditMode && <FormField
-              control={form.control}
-              name="generateTasks"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <Label htmlFor="generate-tasks" className="flex items-center gap-2">
-                      Generate tasks with AI <Wand2 className="h-4 w-4 text-primary" />
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Let AI suggest some initial tasks based on your title.
-                    </p>
-                  </div>
-                </FormItem>
-              )}
-            />}
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isSubmitting}>
                 Cancel
