@@ -150,11 +150,10 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
         form.reset();
         setOpen(false);
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast({
             variant: 'destructive',
-            title: `Error saving task`,
-            description: errorMessage,
+            title: 'Failed to save task',
+            description: 'Please add all data',
         });
     } finally {
         setIsSubmitting(false);
