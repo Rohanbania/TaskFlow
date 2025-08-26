@@ -219,21 +219,6 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                         />
                          <FormField
                           control={form.control}
-                          name="startTime"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Start Time</FormLabel>
-                              <FormControl>
-                                <Input type="time" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                         <FormField
-                          control={form.control}
                           name="endDate"
                           render={({ field }) => (
                             <FormItem className="flex flex-col">
@@ -269,6 +254,21 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                                   />
                                 </PopoverContent>
                               </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <FormField
+                          control={form.control}
+                          name="startTime"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Start Time</FormLabel>
+                              <FormControl>
+                                <Input type="time" {...field} />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
