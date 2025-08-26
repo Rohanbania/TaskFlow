@@ -108,7 +108,14 @@ export default function Home() {
                     New Flow
                 </Button>
             </CreateFlowDialog>}
-            {user && <UserNav />}
+            {user ? <UserNav /> : (
+              !loading && (
+                <Button onClick={signInWithGoogle}>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Sign In
+                </Button>
+              )
+            )}
           </div>
         </div>
       </header>
