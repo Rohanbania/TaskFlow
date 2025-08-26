@@ -82,7 +82,7 @@
     --ring: 222.2 84% 4.9%;
   }
 
-  .dark.theme-zinc {
+  .dark .theme-zinc {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
@@ -126,7 +126,7 @@
     --ring: 24.6 95% 53.1%;
   }
  
-  .dark.theme-orange {
+  .dark .theme-orange {
     --background: 20 14.3% 4.1%;
     --foreground: 60 9.1% 97.8%;
     --card: 20 14.3% 4.1%;
@@ -170,7 +170,7 @@
     --ring: 346.8 77.2% 49.8%;
   }
  
-  .dark.theme-rose {
+  .dark .theme-rose {
     --background: 346.8 77.2% 4.3%;
     --foreground: 355.7 100% 97.3%;
     --card: 346.8 77.2% 4.3%;
