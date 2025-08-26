@@ -15,23 +15,30 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 const COLOR_THEMES = ['zinc', 'orange', 'rose'];
+const LOCAL_STORAGE_COLOR_KEY = 'color-theme';
 
 export function ThemeSwitcher() {
-  const { setTheme: setMode, theme: mode } = useTheme()
+  const { setTheme: setMode, theme: mode } = useTheme();
   const [colorTheme, setColorTheme] = React.useState<string>('');
 
   React.useEffect(() => {
-    const storedTheme = localStorage.getItem("color-theme") || "zinc";
+    // On mount, read the color theme from local storage
+    const storedTheme = localStorage.getItem(LOCAL_STORAGE_COLOR_KEY) || "zinc";
     setColorTheme(storedTheme);
   }, []);
 
   React.useEffect(() => {
+    // When colorTheme state changes, update the class on the <html> element
+    const root = window.document.documentElement;
+    
+    // Remove any existing theme- classes
     COLOR_THEMES.forEach(t => {
-      document.documentElement.classList.remove(`theme-${t}`);
+      root.classList.remove(`theme-${t}`);
     });
+
     if (colorTheme) {
-      document.documentElement.classList.add(`theme-${colorTheme}`);
-      localStorage.setItem("color-theme", colorTheme);
+      root.classList.add(`theme-${colorTheme}`);
+      localStorage.setItem(LOCAL_STORAGE_COLOR_KEY, colorTheme);
     }
   }, [colorTheme]);
 
