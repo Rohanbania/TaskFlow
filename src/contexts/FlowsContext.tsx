@@ -4,7 +4,7 @@ import { createContext, useState, useEffect, useCallback, type ReactNode, useCon
 import type { Flow, Task } from '@/lib/types';
 import { AuthContext } from './AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, doc, onSnapshot, writeBatch, query, orderBy } from 'firebase/firestore';
+import { collection, doc, onSnapshot, writeBatch, query, orderBy, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 
 interface FlowsContextType {
   flows: Flow[];
@@ -68,18 +68,9 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
 }, [user]);
 
-  const commitBatch = async (batch: any) => {
-    try {
-      await batch.commit();
-    } catch (error) {
-      console.error("Error committing batch:", error);
-    }
-  };
-
   const addFlow = useCallback(async (title: string, generatedTasks: string[] = []) => {
     if (!user) throw new Error('User not authenticated');
-    
-    const batch = writeBatch(db);
+
     const newFlowRef = doc(collection(db, `users/${user.uid}/flows`));
     
     const tasks = generatedTasks.map(taskTitle => ({
@@ -90,30 +81,28 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
       recurringDays: [],
     }));
 
-    batch.set(newFlowRef, { 
-        title, 
-        tasks,
-        createdAt: new Date().toISOString()
-    });
+    const newFlowData = {
+      id: newFlowRef.id,
+      title,
+      tasks,
+      createdAt: new Date().toISOString(),
+    };
 
-    await commitBatch(batch);
+    await setDoc(newFlowRef, newFlowData);
+
     return newFlowRef.id;
   }, [user]);
   
   const updateFlow = useCallback(async (flowId: string, updates: Partial<Omit<Flow, 'id' | 'tasks'>>) => {
     if (!user) return;
-    const batch = writeBatch(db);
     const flowRef = doc(db, `users/${user.uid}/flows`, flowId);
-    batch.update(flowRef, updates);
-    await commitBatch(batch);
+    await updateDoc(flowRef, updates);
   }, [user]);
 
   const deleteFlow = useCallback(async (flowId: string) => {
     if (!user) return;
-    const batch = writeBatch(db);
     const flowRef = doc(db, `users/${user.uid}/flows`, flowId);
-    batch.delete(flowRef);
-    await commitBatch(batch);
+    await deleteDoc(flowRef);
   }, [user]);
 
   const getFlowById = useCallback((flowId: string) => {
@@ -127,10 +116,8 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     
     const updatedTasks = typeof newTasks === 'function' ? newTasks(flow.tasks) : newTasks;
     
-    const batch = writeBatch(db);
     const flowRef = doc(db, `users/${user.uid}/flows`, flowId);
-    batch.update(flowRef, { tasks: updatedTasks });
-    await commitBatch(batch);
+    await updateDoc(flowRef, { tasks: updatedTasks });
   }, [user, flows]);
 
   const addTask = useCallback((flowId: string, taskTitle: string, taskDescription: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, recurringDays?: number[]) => {
