@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -30,20 +31,16 @@ export function TaskCalendar({ task }: TaskCalendarProps) {
 
     const isRecurringToday = task.recurringDays && task.recurringDays.length > 0 && task.recurringDays.includes(dayOfWeek);
 
-    const isWithinDateRange = task.startDate && task.endDate ? isWithinInterval(day, {
-        start: new Date(task.startDate),
-        end: new Date(task.endDate)
+    const isWithinDateRange = task.startDate ? isWithinInterval(day, {
+        start: new Date(new Date(task.startDate).setHours(0,0,0,0)),
+        end: new Date(task.endDate ? new Date(task.endDate).setHours(23,59,59,999) : new Date(task.startDate).setHours(23,59,59,999))
     }) : true;
     
     let isScheduled = false;
-    if (task.startDate && !task.recurringDays?.length) {
-        const start = new Date(task.startDate);
-        start.setHours(0,0,0,0);
-        const end = task.endDate ? new Date(task.endDate) : start;
-        end.setHours(23,59,59,999);
-        isScheduled = isWithinInterval(day, { start, end });
-    } else if (task.recurringDays?.length) {
+    if (task.recurringDays?.length) {
         isScheduled = isWithinDateRange && isRecurringToday;
+    } else if (task.startDate) {
+        isScheduled = isWithinDateRange;
     }
 
     const completionDate = task.completionDate ? new Date(task.completionDate) : null;
