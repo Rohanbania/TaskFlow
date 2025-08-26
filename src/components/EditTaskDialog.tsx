@@ -175,7 +175,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
 
                   <div className="space-y-4">
                      <h3 className="text-sm font-medium text-muted-foreground">Scheduling</h3>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
                           name="startDate"
@@ -231,7 +231,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                           )}
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                          <FormField
                           control={form.control}
                           name="endDate"
@@ -297,14 +297,14 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                              <ToggleGroup 
                                 type="multiple"
                                 variant="outline" 
-                                className="justify-start gap-2"
+                                className="flex-wrap justify-start gap-2"
                                 value={field.value?.map(String)}
                                 onValueChange={(value) => field.onChange(value.map(Number))}
                               >
                                 {WEEKDAYS.map(day => (
                                     <ToggleGroupItem key={day.value} value={String(day.value)} aria-label={`Toggle ${day.label}`} className="w-10 h-10">
                                         {day.label}
-                                    </ToggleGroupItem>
+                                    </TogglseGroupItem>
                                 ))}
                             </ToggleGroup>
                           </FormControl>
