@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { FlowsProvider } from '@/contexts/FlowsContext';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata: Metadata = {
   title: 'TaskFlow',
@@ -37,10 +38,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <FlowsProvider>
-            {children}
-            <Toaster />
-          </FlowsProvider>
+          <AuthProvider>
+            <FlowsProvider>
+              {children}
+              <Toaster />
+            </FlowsProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

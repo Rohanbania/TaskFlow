@@ -72,7 +72,7 @@ export function CreateFlowDialog({ children, flowToEdit }: CreateFlowDialogProps
   async function onSubmit(values: CreateFlowFormValues) {
     setIsSubmitting(true);
     try {
-        if (isEditMode) {
+        if (isEditMode && flowToEdit) {
             updateFlow(flowToEdit.id, { title: values.title });
             toast({
                 title: 'Flow Updated',
@@ -97,8 +97,8 @@ export function CreateFlowDialog({ children, flowToEdit }: CreateFlowDialogProps
                 }
             }
             
-            const newFlow = addFlow(values.title, generatedTasks);
-            router.push(`/flow/${newFlow.id}`);
+            const newFlowId = await addFlow(values.title, generatedTasks);
+            router.push(`/flow/${newFlowId}`);
         }
       
       form.reset();

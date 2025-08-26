@@ -15,4 +15,5 @@ export interface Flow {
   id:string;
   title: string;
   tasks: Task[];
+  createdAt: string;
 }
