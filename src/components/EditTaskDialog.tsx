@@ -134,7 +134,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast({
             variant: 'destructive',
-            title: `Task ${isEditMode ? 'update' : 'creation'} failed`,
+            title: `Error saving task`,
             description: errorMessage,
         });
     } finally {
