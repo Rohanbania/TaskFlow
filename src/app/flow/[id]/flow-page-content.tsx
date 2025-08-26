@@ -12,8 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskList } from '@/components/TaskList';
 import { EditTaskDialog } from '@/components/EditTaskDialog';
-import { TaskCalendar } from '@/components/TaskCalendar';
-import type { Task } from '@/lib/types';
+import { TaskReportCard } from '@/components/TaskReportCard';
 
 
 export function FlowPageContent({ id }: { id: string }) {
@@ -23,7 +22,7 @@ export function FlowPageContent({ id }: { id: string }) {
   const router = useRouter();
   
   const flow = useMemo(() => getFlowById(id), [getFlowById, id]);
-  const calendarRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const reportCardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -34,7 +33,7 @@ export function FlowPageContent({ id }: { id: string }) {
   
   useEffect(() => {
     if (flow?.tasks) {
-      calendarRefs.current = calendarRefs.current.slice(0, flow.tasks.length);
+      reportCardRefs.current = reportCardRefs.current.slice(0, flow.tasks.length);
     }
   }, [flow?.tasks]);
 
@@ -50,16 +49,17 @@ export function FlowPageContent({ id }: { id: string }) {
     
     // Add Flow Title
     doc.setFontSize(22);
+    doc.setTextColor(40, 40, 40);
     doc.text(flow.title, margin, margin + 5);
 
     let yPosition = margin + 20;
 
     for (let i = 0; i < flow.tasks.length; i++) {
         const task = flow.tasks[i];
-        const calendarElement = calendarRefs.current[i];
+        const reportCardElement = reportCardRefs.current[i];
 
-        if (calendarElement) {
-            const canvas = await html2canvas(calendarElement, { scale: 2 });
+        if (reportCardElement) {
+            const canvas = await html2canvas(reportCardElement, { scale: 2, windowWidth: 800 });
             const imgData = canvas.toDataURL('image/png');
             
             const imgWidth = contentWidth;
@@ -68,10 +68,15 @@ export function FlowPageContent({ id }: { id: string }) {
             if (yPosition + imgHeight > pageHeight - margin) {
                 doc.addPage();
                 yPosition = margin;
+                // Re-add title on new page
+                doc.setFontSize(22);
+                doc.setTextColor(40, 40, 40);
+                doc.text(flow.title, margin, margin + 5);
+                yPosition = margin + 20;
             }
             
             doc.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
-            yPosition += imgHeight + 10;
+            yPosition += imgHeight + 10; // Add some space between tasks
         }
     }
 
@@ -123,15 +128,15 @@ export function FlowPageContent({ id }: { id: string }) {
         </div>
       </main>
 
-       {/* Hidden calendars for PDF export */}
-       <div className="absolute opacity-0 -z-10" aria-hidden="true">
-        <div className="fixed left-0 top-0">
-         {flow.tasks.map((task, index) => (
-          <div key={task.id} ref={el => calendarRefs.current[index] = el} className="w-[800px] p-4 bg-white">
-            <TaskCalendar task={task} />
-          </div>
-        ))}
-        </div>
+       {/* Hidden container for PDF export content */}
+       <div className="absolute left-[-9999px] top-0 opacity-0 -z-10" aria-hidden="true">
+         <div className="w-[800px] p-4 bg-white">
+             {flow.tasks.map((task, index) => (
+              <div key={task.id} ref={el => reportCardRefs.current[index] = el} className="p-4 mb-4 border border-gray-200 rounded-lg">
+                <TaskReportCard task={task} />
+              </div>
+            ))}
+         </div>
       </div>
     </div>
   );
