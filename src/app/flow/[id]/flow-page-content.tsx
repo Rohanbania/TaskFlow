@@ -55,11 +55,14 @@ export function FlowPageContent({ id }: { id: string }) {
     let yPosition = margin + 20;
 
     for (let i = 0; i < flow.tasks.length; i++) {
-        const task = flow.tasks[i];
         const reportCardElement = reportCardRefs.current[i];
 
         if (reportCardElement) {
-            const canvas = await html2canvas(reportCardElement, { scale: 2, windowWidth: 800 });
+            const canvas = await html2canvas(reportCardElement, { 
+              scale: 2, 
+              width: reportCardElement.offsetWidth,
+              windowWidth: reportCardElement.offsetWidth 
+            });
             const imgData = canvas.toDataURL('image/png');
             
             const imgWidth = contentWidth;
@@ -68,7 +71,6 @@ export function FlowPageContent({ id }: { id: string }) {
             if (yPosition + imgHeight > pageHeight - margin) {
                 doc.addPage();
                 yPosition = margin;
-                // Re-add title on new page
                 doc.setFontSize(22);
                 doc.setTextColor(40, 40, 40);
                 doc.text(flow.title, margin, margin + 5);
@@ -76,7 +78,7 @@ export function FlowPageContent({ id }: { id: string }) {
             }
             
             doc.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
-            yPosition += imgHeight + 10; // Add some space between tasks
+            yPosition += imgHeight + 10;
         }
     }
 
@@ -129,10 +131,10 @@ export function FlowPageContent({ id }: { id: string }) {
       </main>
 
        {/* Hidden container for PDF export content */}
-       <div className="absolute left-[-9999px] top-0 opacity-0 -z-10" aria-hidden="true">
-         <div className="w-[800px] p-4 bg-white">
+       <div className="light absolute left-[-9999px] top-0 -z-10" aria-hidden="true">
+         <div className="p-4">
              {flow.tasks.map((task, index) => (
-              <div key={task.id} ref={el => reportCardRefs.current[index] = el} className="p-4 mb-4 border border-gray-200 rounded-lg">
+              <div key={task.id} ref={el => reportCardRefs.current[index] = el} className="mb-4" style={{width: '800px'}}>
                 <TaskReportCard task={task} />
               </div>
             ))}

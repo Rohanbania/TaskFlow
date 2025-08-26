@@ -64,22 +64,22 @@ export function TaskReportCard({
         'completed-on-time': { 
             text: 'Completed On Time',
             icon: <CheckCircle2 className="h-5 w-5" />,
-            className: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700'
+            className: 'bg-green-100 text-green-800 border-green-300'
         },
         'completed-late': {
             text: 'Completed Late',
             icon: <AlertTriangle className="h-5 w-5" />,
-            className: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700'
+            className: 'bg-yellow-100 text-yellow-800 border-yellow-300'
         },
         'incomplete-overdue': {
             text: 'Overtime',
             icon: <AlertTriangle className="h-5 w-5" />,
-            className: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700'
+            className: 'bg-red-100 text-red-800 border-red-300'
         },
         'pending': {
             text: 'Pending',
             icon: <ListTodo className="h-5 w-5" />,
-            className: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800/50 dark:text-gray-300 dark:border-gray-600'
+            className: 'bg-gray-100 text-gray-800 border-gray-300'
         }
     }
     
@@ -106,8 +106,8 @@ export function TaskReportCard({
     }
 
   return (
-        <div className="mt-4 space-y-6">
-            <div className="flex items-center justify-center">
+        <div className="p-6 rounded-2xl bg-white text-black shadow-2xl border border-gray-100 font-sans">
+            <div className="flex items-center justify-center mb-6">
                 <Badge variant="outline" className={cn(
                     "text-base font-semibold gap-2 px-4 py-2 border-2",
                     statusInfo[status].className
@@ -117,25 +117,25 @@ export function TaskReportCard({
                 </Badge>
             </div>
             
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm rounded-lg border p-4">
-                <div className="font-semibold text-muted-foreground">Start Date:</div>
-                <div className="font-medium">{getStartDate()}</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm rounded-lg border p-4 mb-6 bg-gray-50/50">
+                <div className="font-semibold text-gray-500">Start Date:</div>
+                <div className="font-medium text-gray-800">{getStartDate()}</div>
 
-                <div className="font-semibold text-muted-foreground">Due Date:</div>
-                <div className="font-medium">{getDueDate()}</div>
+                <div className="font-semibold text-gray-500">Due Date:</div>
+                <div className="font-medium text-gray-800">{getDueDate()}</div>
 
-                <div className="font-semibold text-muted-foreground">Completed Date:</div>
-                <div className="font-medium">{task.completionDate ? format(new Date(task.completionDate), "PPP 'at' p") : 'Not completed'}</div>
+                <div className="font-semibold text-gray-500">Completed Date:</div>
+                <div className="font-medium text-gray-800">{task.completionDate ? format(new Date(task.completionDate), "PPP 'at' p") : 'Not completed'}</div>
             </div>
 
-            <div className="bg-background rounded-lg border">
+            <div className="bg-white rounded-lg border">
                 <TaskCalendar task={task} />
             </div>
 
             {task.description && 
-                <div>
-                    <h4 className="font-semibold mb-2 text-sm">Description</h4>
-                    <p className="text-sm text-muted-foreground bg-secondary/50 p-3 rounded-md">{task.description}</p>
+                <div className='mt-6'>
+                    <h4 className="font-headline font-semibold mb-2 text-gray-700">Description</h4>
+                    <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border">{task.description}</p>
                 </div>
             }
         </div>
