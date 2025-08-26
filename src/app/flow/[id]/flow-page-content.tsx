@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useContext, useEffect, useMemo, useState, useRef } from 'react';
@@ -63,7 +64,7 @@ export function FlowPageContent({ id }: { id: string }) {
               width: reportCardElement.offsetWidth,
               windowWidth: reportCardElement.offsetWidth 
             });
-            const imgData = canvas.toDataURL('image/png');
+            const imgData = canvas.toDataURL('image/jpeg', 0.98);
             
             const imgWidth = contentWidth;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -77,7 +78,7 @@ export function FlowPageContent({ id }: { id: string }) {
                 yPosition = margin + 20;
             }
             
-            doc.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+            doc.addImage(imgData, 'JPEG', margin, yPosition, imgWidth, imgHeight);
             yPosition += imgHeight + 10;
         }
     }
