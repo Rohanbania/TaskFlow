@@ -23,8 +23,12 @@ export function ThemeSwitcher() {
 
   React.useEffect(() => {
     // On mount, read the color theme from local storage
-    const storedTheme = localStorage.getItem(LOCAL_STORAGE_COLOR_KEY) || "zinc";
-    setColorTheme(storedTheme);
+    const storedTheme = localStorage.getItem(LOCAL_STORAGE_COLOR_KEY);
+    if (storedTheme && COLOR_THEMES.includes(storedTheme)) {
+        setColorTheme(storedTheme);
+    } else {
+        setColorTheme('zinc');
+    }
   }, []);
 
   React.useEffect(() => {
@@ -32,9 +36,7 @@ export function ThemeSwitcher() {
     const root = window.document.documentElement;
     
     // Remove any existing theme- classes
-    COLOR_THEMES.forEach(t => {
-      root.classList.remove(`theme-${t}`);
-    });
+    root.classList.remove(...COLOR_THEMES.map(t => `theme-${t}`));
 
     if (colorTheme) {
       root.classList.add(`theme-${colorTheme}`);
