@@ -1,16 +1,12 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Make sure only authenticated users can access their own data.
-    match /users/{userId} {
-      // Deny reads/writes to the user document itself if it's not needed.
-      allow read, write: if false;
-
-      // Allow users to manage their own flows subcollection.
-      match /flows/{flowId} {
-        allow read, write, list: if request.auth.uid == userId;
-      }
+    // Allow read/write access to all documents for any authenticated user
+    // WARNING: This is insecure and for development purposes only.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
