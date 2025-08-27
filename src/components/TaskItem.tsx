@@ -88,7 +88,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
               {task.description}
             </p>
           )}
-           <div className='flex items-center gap-4'>
+           <div className='flex flex-wrap items-center gap-x-4 gap-y-2'>
              {task.startTime && task.endTime && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />

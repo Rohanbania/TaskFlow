@@ -4,6 +4,8 @@
 import { useState, useEffect } from 'react';
 import { parse, differenceInSeconds } from 'date-fns';
 import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
+import { Timer } from 'lucide-react';
 
 interface TaskCountdownProps {
   startTime?: string;
@@ -36,7 +38,7 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
         const minutes = Math.floor((secondsToStart % 3600) / 60);
         const seconds = secondsToStart % 60;
         setCountdown(
-          `Starts in: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+          `Starts in ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
         );
       } else if (isLive) {
         setStatus('live');
@@ -45,11 +47,11 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
         const minutes = Math.floor((secondsToEnd % 3600) / 60);
         const seconds = secondsToEnd % 60;
         setCountdown(
-          `Time left: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+          `Ends in ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
         );
       } else if (isEnded) {
         setStatus('ended');
-        setCountdown('Ended');
+        setCountdown('Ended for today');
         clearInterval(interval);
       }
     }, 1000);
@@ -62,8 +64,15 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
   }
 
   return (
-    <Badge variant={status === 'live' ? 'destructive' : 'secondary'} className="text-xs">
-      {countdown}
+    <Badge
+      variant={status === 'live' ? 'destructive' : 'secondary'}
+      className={cn(
+        'flex items-center gap-1.5 text-xs',
+        status === 'live' && 'animate-pulse'
+      )}
+    >
+      <Timer className="h-3 w-3" />
+      <span>{countdown}</span>
     </Badge>
   );
 }
