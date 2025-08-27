@@ -14,7 +14,7 @@ interface TaskCountdownProps {
 
 export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
   const [countdown, setCountdown] = useState('');
-  const [status, setStatus] = useState<'pending' | 'live' | 'ended'>('pending');
+  const [status, setStatus] = useState<'pending' | 'live' | 'overdue'>('pending');
 
   useEffect(() => {
     if (!startTime || !endTime) {
@@ -29,7 +29,7 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
 
       const isLive = now >= todayStartTime && now <= todayEndTime;
       const isPending = now < todayStartTime;
-      const isEnded = now > todayEndTime;
+      const isOverdue = now > todayEndTime;
 
       if (isPending) {
         setStatus('pending');
@@ -49,23 +49,28 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
         setCountdown(
           `Ends in ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
         );
-      } else if (isEnded) {
-        setStatus('ended');
-        setCountdown('Ended for today');
-        clearInterval(interval);
+      } else if (isOverdue) {
+        setStatus('overdue');
+        const secondsOverdue = differenceInSeconds(now, todayEndTime);
+        const hours = Math.floor(secondsOverdue / 3600);
+        const minutes = Math.floor((secondsOverdue % 3600) / 60);
+        const seconds = secondsOverdue % 60;
+        setCountdown(
+          `Overdue by ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+        );
       }
     }, 1000);
 
     return () => clearInterval(interval);
   }, [startTime, endTime]);
 
-  if (!countdown || status === 'ended') {
+  if (!countdown) {
     return null;
   }
 
   return (
     <Badge
-      variant={status === 'live' ? 'destructive' : 'secondary'}
+      variant={status === 'live' ? 'default' : (status === 'overdue' ? 'destructive': 'secondary')}
       className={cn(
         'flex items-center gap-1.5 text-xs',
         status === 'live' && 'animate-pulse'
