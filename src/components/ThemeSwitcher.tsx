@@ -14,15 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function ThemeSwitcher() {
-  const { setTheme, theme } = useTheme()
-
-  const setRosy = () => {
-    if (theme?.includes('dark')) {
-      setTheme('dark-rosy');
-    } else {
-      setTheme('light-rosy');
-    }
-  }
+  const { setTheme } = useTheme()
 
   return (
     <DropdownMenu>
@@ -39,9 +31,6 @@ export function ThemeSwitcher() {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("dark")}>
           Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setRosy()}>
-          Rosy
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("system")}>
           System
