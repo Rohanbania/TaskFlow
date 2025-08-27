@@ -21,11 +21,18 @@ export function ThemeSwitcher() {
   const { setTheme, theme } = useTheme()
 
   const [currentMode, currentColor] = React.useMemo(() => {
+    if (theme === 'system') {
+        return ['system', 'zinc'];
+    }
     const [mode = 'light', color = 'zinc'] = theme?.split('-') || [];
     return [mode, color];
   }, [theme]);
 
   const handleThemeChange = (newComponent: string, type: 'mode' | 'color') => {
+    if (currentMode === 'system' && type === 'mode') {
+        setTheme(newComponent);
+        return;
+    }
     const newTheme = type === 'mode' 
       ? `${newComponent}-${currentColor}` 
       : `${currentMode}-${newComponent}`;
