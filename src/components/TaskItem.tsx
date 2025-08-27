@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useContext, useState, useEffect, useMemo } from 'react';
-import { MoreVertical, Trash2, Wand2, BarChart2, Pencil, Clock } from 'lucide-react';
+import { useContext, useState, useMemo } from 'react';
+import { MoreVertical, Trash2, Wand2, BarChart2, Pencil, Clock, CheckCircle2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,7 +61,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
 
   return (
     <div className="flex w-full items-start justify-between gap-4">
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-4 flex-1 min-w-0">
         <Checkbox
           id={`task-${task.id}`}
           checked={isCompletedToday}
@@ -69,7 +69,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
           className="mt-1 h-5 w-5 flex-shrink-0"
           aria-labelledby={`task-title-${task.id}`}
         />
-        <div className="grid gap-1.5">
+        <div className="grid gap-1.5 flex-1">
           <label
             id={`task-title-${task.id}`}
             htmlFor={`task-${task.id}`}
@@ -88,14 +88,23 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
               {task.description}
             </p>
           )}
-           <div className='flex flex-wrap items-center gap-x-4 gap-y-2'>
-             {task.startTime && task.endTime && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span>{formatTime(task.startTime)} - {formatTime(task.endTime)}</span>
-              </div>
-            )}
-            <TaskCountdown startTime={task.startTime} endTime={task.endTime} />
+           <div className='flex flex-wrap items-center gap-x-4 gap-y-2 mt-1'>
+             {isCompletedToday ? (
+                <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                    <CheckCircle2 className="mr-1.5 h-3 w-3" />
+                    Task Completed
+                </Badge>
+             ) : (
+                <>
+                    {task.startTime && task.endTime && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>{formatTime(task.startTime)} - {formatTime(task.endTime)}</span>
+                    </div>
+                    )}
+                    <TaskCountdown startTime={task.startTime} endTime={task.endTime} />
+                </>
+             )}
            </div>
         </div>
       </div>
