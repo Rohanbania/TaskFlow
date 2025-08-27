@@ -18,25 +18,29 @@ import {
 const COLOR_THEMES = ['zinc', 'orange', 'rose', 'blue'];
 
 export function ThemeSwitcher() {
-  const { setTheme, theme } = useTheme()
+  const { setTheme, theme, resolvedTheme } = useTheme()
 
   const [currentMode, currentColor] = React.useMemo(() => {
+    const [mode, color] = theme?.split('-') || [];
     if (theme === 'system') {
-        return ['system', 'zinc'];
+        return [theme, color || 'zinc'];
     }
-    const [mode = 'light', color = 'zinc'] = theme?.split('-') || [];
-    return [mode, color];
+    return [mode || 'light', color || 'zinc'];
   }, [theme]);
 
   const handleThemeChange = (newComponent: string, type: 'mode' | 'color') => {
-    if (currentMode === 'system' && type === 'mode') {
-        setTheme(newComponent);
+    if (type === 'mode') {
+      if (newComponent === 'system') {
+        setTheme('system');
         return;
+      }
+      setTheme(`${newComponent}-${currentColor}`);
+    } else {
+      // When changing color, respect the current mode (light/dark)
+      // If currentMode is system, use the resolvedTheme to determine light/dark
+      const mode = currentMode === 'system' ? resolvedTheme : currentMode;
+      setTheme(`${mode}-${newComponent}`);
     }
-    const newTheme = type === 'mode' 
-      ? `${newComponent}-${currentColor}` 
-      : `${currentMode}-${newComponent}`;
-    setTheme(newTheme);
   };
 
   return (
@@ -56,7 +60,7 @@ export function ThemeSwitcher() {
         <DropdownMenuItem onClick={() => handleThemeChange('dark', 'mode')}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
+        <DropdownMenuItem onClick={() => handleThemeChange('system', 'mode')}>
           System
         </DropdownMenuItem>
         <DropdownMenuSeparator />
