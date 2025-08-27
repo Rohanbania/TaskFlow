@@ -49,6 +49,7 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
     const interval = setInterval(() => {
       if (!startTime || !endTime) {
         setCountdown('');
+        setDynamicStyle({});
         return;
       }
 
@@ -91,11 +92,9 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
             const remainingTime = differenceInMilliseconds(todayEndTime, now);
             const timeFraction = Math.max(0, remainingTime) / totalDuration;
             
-            // Interpolate Hue and Lightness
-            // We go from primary hue to destructive hue (e.g., blue -> red)
-            const h = primaryHsl[0] + (destructiveHsl[0] - primaryHsl[0]) * (1 - timeFraction);
-            const s = primaryHsl[1]; // Keep saturation constant
-            const l = primaryHsl[2] + (destructiveHsl[2] - primaryHsl[2]) * (1 - timeFraction);
+            const h = primaryHsl[0] - (primaryHsl[0] - destructiveHsl[0]) * (1 - timeFraction);
+            const s = primaryHsl[1] - (primaryHsl[1] - destructiveHsl[1]) * (1 - timeFraction);
+            const l = primaryHsl[2] - (primaryHsl[2] - destructiveHsl[2]) * (1 - timeFraction);
 
             setDynamicStyle({ 
                 backgroundColor: `hsl(${h}, ${s}%, ${l}%)`,
