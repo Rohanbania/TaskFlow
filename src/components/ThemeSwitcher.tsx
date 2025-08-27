@@ -11,31 +11,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 
-const COLOR_THEMES = ['zinc', 'orange', 'rose', 'blue'];
-
 export function ThemeSwitcher() {
-  const { setTheme, theme, resolvedTheme } = useTheme()
+  const { setTheme, theme } = useTheme()
 
-  const handleThemeChange = (newComponent: string, type: 'mode' | 'color') => {
-    let newTheme = '';
-    if (type === 'mode') {
-      if (newComponent === 'system') {
-        newTheme = 'system';
-      } else {
-        const currentColor = theme?.split('-')[1] || 'zinc';
-        newTheme = `${newComponent}-${currentColor}`;
-      }
-    } else { // type === 'color'
-      const currentMode = theme === 'system' ? resolvedTheme : (theme?.split('-')[0] || 'light');
-      newTheme = `${currentMode}-${newComponent}`;
+  const setRosy = () => {
+    if (theme?.includes('dark')) {
+      setTheme('dark rosy');
+    } else {
+      setTheme('light rosy');
     }
-    setTheme(newTheme);
-  };
-
+  }
 
   return (
     <DropdownMenu>
@@ -47,27 +34,18 @@ export function ThemeSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Mode</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => handleThemeChange('light', 'mode')}>
+        <DropdownMenuItem onClick={() => setTheme("light")}>
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleThemeChange('dark', 'mode')}>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleThemeChange('system', 'mode')}>
+        <DropdownMenuItem onClick={() => setRosy()}>
+          Rosy
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
           System
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>Color</DropdownMenuLabel>
-        {COLOR_THEMES.map((color) => (
-          <DropdownMenuItem
-            key={color}
-            onClick={() => handleThemeChange(color, 'color')}
-            className="capitalize"
-          >
-            {color}
-          </DropdownMenuItem>
-        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   )
