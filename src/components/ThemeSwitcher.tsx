@@ -18,9 +18,9 @@ export function ThemeSwitcher() {
 
   const setRosy = () => {
     if (theme?.includes('dark')) {
-      setTheme('dark rosy');
+      setTheme('dark-rosy');
     } else {
-      setTheme('light rosy');
+      setTheme('light-rosy');
     }
   }
 
