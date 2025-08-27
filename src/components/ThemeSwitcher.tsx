@@ -20,30 +20,22 @@ const COLOR_THEMES = ['zinc', 'orange', 'rose', 'blue'];
 export function ThemeSwitcher() {
   const { setTheme, theme, resolvedTheme } = useTheme()
 
-  const [currentMode, currentColor] = React.useMemo(() => {
-    if (theme === 'system') {
-        return ['system', 'zinc']; // Default color for system
-    }
-    const [mode, color] = theme?.split('-') || [];
-    return [mode || 'light', color || 'zinc'];
-  }, [theme]);
-
   const handleThemeChange = (newComponent: string, type: 'mode' | 'color') => {
+    let newTheme = '';
     if (type === 'mode') {
       if (newComponent === 'system') {
-        setTheme('system');
-        return;
+        newTheme = 'system';
+      } else {
+        const currentColor = theme?.split('-')[1] || 'zinc';
+        newTheme = `${newComponent}-${currentColor}`;
       }
-      // When switching mode, we need to know the current color.
-      const color = theme?.includes('-') ? theme.split('-')[1] : 'zinc';
-      setTheme(`${newComponent}-${color}`);
-    } else {
-      // When changing color, respect the current mode (light/dark)
-      // If currentMode is system, use the resolvedTheme to determine light/dark
-      const mode = currentMode === 'system' ? resolvedTheme : currentMode;
-      setTheme(`${mode}-${newComponent}`);
+    } else { // type === 'color'
+      const currentMode = theme === 'system' ? resolvedTheme : (theme?.split('-')[0] || 'light');
+      newTheme = `${currentMode}-${newComponent}`;
     }
+    setTheme(newTheme);
   };
+
 
   return (
     <DropdownMenu>
