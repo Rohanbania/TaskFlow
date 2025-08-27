@@ -140,14 +140,24 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
     <Badge
       variant={getVariant()}
       className={cn(
-        'flex items-center gap-1.5 text-xs',
-         (status === 'live' || (status === 'pending' && dynamicStyle.backgroundColor)) && 'text-primary-foreground',
-         status === 'live' && 'animate-pulse'
+        'flex items-center gap-2 text-xs',
+         (status === 'live' || (status === 'pending' && dynamicStyle.backgroundColor)) && 'text-primary-foreground'
       )}
       style={dynamicStyle}
     >
-      <Timer className="h-3 w-3" />
-      <span>{countdown}</span>
+        {status === 'live' && (
+            <div className='flex items-center gap-1.5'>
+                <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
+                <span className='font-semibold'>Live</span>
+            </div>
+        )}
+      <div className='flex items-center gap-1.5'>
+        <Timer className="h-3 w-3" />
+        <span>{countdown}</span>
+      </div>
     </Badge>
   );
 }
