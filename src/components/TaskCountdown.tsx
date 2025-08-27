@@ -38,12 +38,16 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
     const computedStyle = getComputedStyle(document.documentElement);
     const primaryColorStr = computedStyle.getPropertyValue('--primary').trim();
     const destructiveColorStr = computedStyle.getPropertyValue('--destructive').trim();
-    
+    const secondaryColorStr = computedStyle.getPropertyValue('--secondary').trim();
+
     const primaryHsl = parseHsl(primaryColorStr);
     const destructiveHsl = parseHsl(destructiveColorStr) || [0, 84.2, 60.2]; // Fallback to default red
+    const secondaryHsl = parseHsl(secondaryColorStr);
+    
+    const PRE_START_TRANSITION_SECONDS = 3600; // Start transitioning color 1 hour before start
 
     const interval = setInterval(() => {
-      if (!startTime || !endTime || !primaryHsl) {
+      if (!startTime || !endTime) {
         setCountdown('');
         return;
       }
@@ -55,11 +59,25 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
       const isLive = now >= todayStartTime && now <= todayEndTime;
       const isPending = now < todayStartTime;
       const isOverdue = now > todayEndTime;
+      
+      const secondsToStart = differenceInSeconds(todayStartTime, now);
 
       if (isPending) {
         setStatus('pending');
-        setDynamicStyle({});
-        const secondsToStart = differenceInSeconds(todayStartTime, now);
+        
+        if(secondaryHsl && primaryHsl && secondsToStart <= PRE_START_TRANSITION_SECONDS) {
+            const timeFraction = Math.max(0, PRE_START_TRANSITION_SECONDS - secondsToStart) / PRE_START_TRANSITION_SECONDS;
+             const h = secondaryHsl[0] + (primaryHsl[0] - secondaryHsl[0]) * timeFraction;
+             const s = secondaryHsl[1] + (primaryHsl[1] - secondaryHsl[1]) * timeFraction;
+             const l = secondaryHsl[2] + (primaryHsl[2] - secondaryHsl[2]) * timeFraction;
+              setDynamicStyle({ 
+                backgroundColor: `hsl(${h}, ${s}%, ${l}%)`,
+                transition: 'background-color 1s linear',
+            });
+        } else {
+            setDynamicStyle({});
+        }
+
         const hours = Math.floor(secondsToStart / 3600);
         const minutes = Math.floor((secondsToStart % 3600) / 60);
         const seconds = secondsToStart % 60;
@@ -68,20 +86,22 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
         );
       } else if (isLive) {
         setStatus('live');
-        const totalDuration = differenceInMilliseconds(todayEndTime, todayStartTime);
-        const remainingTime = differenceInMilliseconds(todayEndTime, now);
-        const timeFraction = Math.max(0, remainingTime) / totalDuration;
-        
-        // Interpolate Hue and Lightness
-        // We go from primary hue to destructive hue (e.g., blue -> red)
-        const h = primaryHsl[0] + (destructiveHsl[0] - primaryHsl[0]) * (1 - timeFraction);
-        const s = primaryHsl[1]; // Keep saturation constant
-        const l = primaryHsl[2] + (destructiveHsl[2] - primaryHsl[2]) * (1 - timeFraction);
+        if (primaryHsl) {
+            const totalDuration = differenceInMilliseconds(todayEndTime, todayStartTime);
+            const remainingTime = differenceInMilliseconds(todayEndTime, now);
+            const timeFraction = Math.max(0, remainingTime) / totalDuration;
+            
+            // Interpolate Hue and Lightness
+            // We go from primary hue to destructive hue (e.g., blue -> red)
+            const h = primaryHsl[0] + (destructiveHsl[0] - primaryHsl[0]) * (1 - timeFraction);
+            const s = primaryHsl[1]; // Keep saturation constant
+            const l = primaryHsl[2] + (destructiveHsl[2] - primaryHsl[2]) * (1 - timeFraction);
 
-        setDynamicStyle({ 
-            backgroundColor: `hsl(${h}, ${s}%, ${l}%)`,
-            transition: 'background-color 1s linear',
-        });
+            setDynamicStyle({ 
+                backgroundColor: `hsl(${h}, ${s}%, ${l}%)`,
+                transition: 'background-color 1s linear',
+            });
+        }
         
         const secondsToEnd = differenceInSeconds(todayEndTime, now);
         const hours = Math.floor(secondsToEnd / 3600);
@@ -113,6 +133,7 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
   const getVariant = () => {
     if (status === 'live') return 'default';
     if (status === 'overdue') return 'destructive';
+    if (status === 'pending' && dynamicStyle.backgroundColor) return 'default';
     return 'secondary';
   }
 
@@ -121,9 +142,10 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
       variant={getVariant()}
       className={cn(
         'flex items-center gap-1.5 text-xs',
-        status === 'live' && 'animate-pulse text-primary-foreground'
+         (status === 'live' || (status === 'pending' && dynamicStyle.backgroundColor)) && 'text-primary-foreground',
+         status === 'live' && 'animate-pulse'
       )}
-      style={status === 'live' ? dynamicStyle : {}}
+      style={dynamicStyle}
     >
       <Timer className="h-3 w-3" />
       <span>{countdown}</span>
