@@ -30,6 +30,7 @@ import { Badge } from './ui/badge';
 import { TaskAnalyticsDialog } from './TaskAnalyticsDialog';
 import { EditTaskDialog } from './EditTaskDialog';
 import { format, startOfDay, parse } from 'date-fns';
+import { TaskCountdown } from './TaskCountdown';
 
 interface TaskItemProps {
   flowId: string;
@@ -87,12 +88,15 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
               {task.description}
             </p>
           )}
-           {task.startTime && task.endTime && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>{formatTime(task.startTime)} - {formatTime(task.endTime)}</span>
-            </div>
-          )}
+           <div className='flex items-center gap-4'>
+             {task.startTime && task.endTime && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>{formatTime(task.startTime)} - {formatTime(task.endTime)}</span>
+              </div>
+            )}
+            <TaskCountdown startTime={task.startTime} endTime={task.endTime} />
+           </div>
         </div>
       </div>
 
