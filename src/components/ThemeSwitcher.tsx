@@ -21,10 +21,10 @@ export function ThemeSwitcher() {
   const { setTheme, theme, resolvedTheme } = useTheme()
 
   const [currentMode, currentColor] = React.useMemo(() => {
-    const [mode, color] = theme?.split('-') || [];
     if (theme === 'system') {
-        return [theme, color || 'zinc'];
+        return ['system', 'zinc']; // Default color for system
     }
+    const [mode, color] = theme?.split('-') || [];
     return [mode || 'light', color || 'zinc'];
   }, [theme]);
 
@@ -34,7 +34,9 @@ export function ThemeSwitcher() {
         setTheme('system');
         return;
       }
-      setTheme(`${newComponent}-${currentColor}`);
+      // When switching mode, we need to know the current color.
+      const color = theme?.includes('-') ? theme.split('-')[1] : 'zinc';
+      setTheme(`${newComponent}-${color}`);
     } else {
       // When changing color, respect the current mode (light/dark)
       // If currentMode is system, use the resolvedTheme to determine light/dark
