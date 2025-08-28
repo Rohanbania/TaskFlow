@@ -28,7 +28,6 @@ export function useTaskNotifications(flows: Flow[]) {
             if (minutesToStart === NOTIFICATION_WINDOW_MINUTES && !notifiedTasksRef.current.has(startNotificationId)) {
               new Notification(`'${task.title}' is starting soon!`, {
                 body: `This task is scheduled to begin in ${NOTIFICATION_WINDOW_MINUTES} minutes.`,
-                icon: '/download.png'
               });
               notifiedTasksRef.current.add(startNotificationId);
             }
@@ -42,7 +41,6 @@ export function useTaskNotifications(flows: Flow[]) {
             if (minutesToEnd === NOTIFICATION_WINDOW_MINUTES && !notifiedTasksRef.current.has(endNotificationId)) {
                 new Notification(`'${task.title}' is ending soon!`, {
                   body: `This task is scheduled to end in ${NOTIFICATION_WINDOW_MINUTES} minutes.`,
-                  icon: '/download.png'
                 });
                 notifiedTasksRef.current.add(endNotificationId);
             }

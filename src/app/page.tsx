@@ -4,7 +4,7 @@
 import { useContext, useEffect, useState, type TouchEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BookMarked, Plus, LayoutGrid, Bell, X, LogIn, CheckCircle, CalendarClock } from 'lucide-react';
+import { BookCheck, Plus, LayoutGrid, Bell, X, LogIn, CheckCircle, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CreateFlowDialog } from '@/components/CreateFlowDialog';
 import { FlowCard } from '@/components/FlowCard';
@@ -138,7 +138,7 @@ export default function Home() {
       <header className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <BookMarked className="h-6 w-6 text-primary" />
+            <BookCheck className="h-6 w-6 text-primary" />
             <span className="text-lg font-bold font-headline">TaskFlow</span>
           </Link>
           <div className="flex items-center gap-2">

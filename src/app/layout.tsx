@@ -35,7 +35,6 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#0f172a" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/download.png" sizes="any" />
       </head>
       <body
         className={cn(
