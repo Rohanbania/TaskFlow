@@ -1,11 +1,11 @@
 {
   "name": "TaskFlow",
   "short_name": "TaskFlow",
-  "description": "A unique to-do list application that helps you organize your tasks into flows.",
+  "description": "A unique to-do list application that helps you manage your daily tasks and workflows.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "/download.png",
