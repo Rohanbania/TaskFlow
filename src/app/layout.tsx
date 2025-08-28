@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
@@ -6,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Inter, Manrope } from 'next/font/google';
+import { AnimatePresence } from 'framer-motion';
 
 const fontBody = Inter({
   subsets: ['latin'],
@@ -50,8 +52,8 @@ export default function RootLayout({
         >
           <AuthProvider>
             <FlowsProvider>
-              {children}
-              <Toaster />
+                {children}
+                <Toaster />
             </FlowsProvider>
           </AuthProvider>
         </NextThemesProvider>

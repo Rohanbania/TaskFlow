@@ -134,7 +134,6 @@ export default function Home() {
   }
 
   return (
-    <PageTransition>
     <div className="min-h-screen" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       <header className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
@@ -167,6 +166,7 @@ export default function Home() {
       </header>
 
       <main className="container mx-auto px-4 py-8 md:px-6">
+       <PageTransition>
         {showPermissionBanner && (
           <Alert className="mb-6 flex items-start justify-between gap-4">
            <div className='flex items-start gap-4'>
@@ -202,8 +202,8 @@ export default function Home() {
         </div>}
 
         {renderContent()}
+       </PageTransition>
       </main>
     </div>
-    </PageTransition>
   );
 }

@@ -74,8 +74,8 @@ export default function TodayPage() {
   }
 
   return (
-    <PageTransition>
     <div className="container mx-auto max-w-4xl px-4 py-8 md:px-6" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+      <PageTransition>
        <header className="mb-8">
         <Button variant="ghost" asChild className="mb-4 -ml-4">
           <Link href="/">
@@ -112,8 +112,8 @@ export default function TodayPage() {
             </Alert>
         )}
       </main>
+      </PageTransition>
     </div>
-    </PageTransition>
   );
 }
 

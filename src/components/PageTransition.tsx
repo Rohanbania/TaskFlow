@@ -3,23 +3,44 @@
 
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 
 const variants = {
-  hidden: { opacity: 0, x: 200, y: 0 },
-  enter: { opacity: 1, x: 0, y: 0 },
-  exit: { opacity: 0, x: -200, y: 0 },
+  enter: (direction: number) => ({
+    x: direction > 0 ? '100%' : '-100%',
+    opacity: 0,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? '100%' : '-100%',
+    opacity: 0,
+  }),
 };
 
+
 export function PageTransition({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const direction = pathname === '/' ? -1 : 1;
+
   return (
-    <motion.main
+    <motion.div
+      key={pathname}
+      custom={direction}
       variants={variants}
-      initial="hidden"
-      animate="enter"
+      initial="enter"
+      animate="center"
       exit="exit"
-      transition={{ type: 'linear', duration: 0.3 }}
+      transition={{
+        x: { type: 'spring', stiffness: 300, damping: 30 },
+        opacity: { duration: 0.2 },
+      }}
     >
       {children}
-    </motion.main>
+    </motion.div>
   );
 }
