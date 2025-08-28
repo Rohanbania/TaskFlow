@@ -142,13 +142,17 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     await updateFlowTasks(flowId, (tasks) =>
       tasks.map((task) => {
         if (task.id === taskId) {
+          // Create a new object with the updates applied.
+          // This avoids directly mutating the task object.
           const updatedTask = { ...task, ...updates };
-           // Ensure undefined fields are handled correctly by converting them to "delete" operations for firestore
+
+          // Remove keys that are explicitly set to undefined.
+          // Firestore doesn't store 'undefined', so this keeps the data clean.
           Object.keys(updatedTask).forEach(key => {
-            const taskKey = key as keyof Partial<Task>;
-            if (updatedTask[taskKey] === undefined) {
-              delete (updatedTask as any)[taskKey];
-            }
+              const taskKey = key as keyof typeof updatedTask;
+              if (updatedTask[taskKey] === undefined) {
+                  delete (updatedTask as any)[taskKey];
+              }
           });
           return updatedTask;
         }

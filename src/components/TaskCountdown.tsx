@@ -28,11 +28,14 @@ const parseHsl = (hslStr: string): [number, number, number] | null => {
 
 export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
   const [countdown, setCountdown] = useState('');
-  const [status, setStatus] = useState<'pending' | 'live' | 'overdue'>('pending');
+  const [status, setStatus] = useState<'pending' | 'live' | 'overdue' | 'none'>('none');
   const [dynamicStyle, setDynamicStyle] = useState<React.CSSProperties>({});
   
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+        setStatus('none');
+        return;
+    };
 
     const computedStyle = getComputedStyle(document.documentElement);
     const primaryColorStr = computedStyle.getPropertyValue('--primary').trim();
@@ -49,6 +52,7 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
       if (!startTime || !endTime) {
         setCountdown('');
         setDynamicStyle({});
+        setStatus('none');
         return;
       }
 
@@ -63,7 +67,7 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
       const secondsToStart = differenceInSeconds(todayStartTime, now);
 
       if (isPending) {
-        setStatus('pending');
+        if (status !== 'pending') setStatus('pending');
         
         if(secondaryHsl && primaryHsl && secondsToStart > 0 && secondsToStart <= PRE_START_TRANSITION_SECONDS) {
             const timeFraction = 1 - (secondsToStart / PRE_START_TRANSITION_SECONDS);
@@ -85,7 +89,7 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
           `Starts in ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
         );
       } else if (isLive) {
-        setStatus('live');
+        if (status !== 'live') setStatus('live');
         if (primaryHsl) {
             const totalDuration = differenceInMilliseconds(todayEndTime, todayStartTime);
             const timeElapsed = differenceInMilliseconds(now, todayStartTime);
@@ -109,7 +113,7 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
           `Ends in ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
         );
       } else if (isOverdue) {
-        setStatus('overdue');
+        if (status !== 'overdue') setStatus('overdue');
         setDynamicStyle({});
         const secondsOverdue = differenceInSeconds(now, todayEndTime);
         const hours = Math.floor(secondsOverdue / 3600);
@@ -122,9 +126,9 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [startTime, endTime]);
+  }, [startTime, endTime, status]);
 
-  if (!countdown) {
+  if (!countdown || status === 'none') {
     return null;
   }
   

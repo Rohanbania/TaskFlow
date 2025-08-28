@@ -64,8 +64,9 @@ export function FlowPageContent({ id }: { id: string }) {
             const canvas = await html2canvas(reportCardElement, { 
               scale: 2,
               useCORS: true,
+              // Ensure consistent canvas width for predictable output
               width: reportCardElement.offsetWidth,
-              windowWidth: reportCardElement.offsetWidth,
+              windowWidth: reportCardElement.scrollWidth,
             });
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             
@@ -75,10 +76,6 @@ export function FlowPageContent({ id }: { id: string }) {
             if (yPosition + imgHeight > pageHeight - margin) {
                 doc.addPage();
                 yPosition = margin;
-                doc.setFontSize(22);
-                doc.setTextColor(40, 40, 40);
-                doc.text(titleLines, margin, margin + 5);
-                yPosition = margin + 5 + (titleLines.length * 10);
             }
             
             doc.addImage(imgData, 'JPEG', margin, yPosition, imgWidth, imgHeight);

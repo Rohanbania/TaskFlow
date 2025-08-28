@@ -91,19 +91,21 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
           )}
            <div className='flex flex-wrap items-center gap-x-4 gap-y-2 mt-1'>
              {isCompletedToday ? (
-                <Badge variant="outline" className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                <Badge variant="outline" className="border-green-300 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
                     <CheckCircle2 className="mr-1.5 h-3 w-3" />
                     Task Completed
                 </Badge>
              ) : (
                 <>
                     {task.startTime && task.endTime && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>{formatTime(task.startTime)} - {formatTime(task.endTime)}</span>
-                    </div>
+                      <>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatTime(task.startTime)} - {formatTime(task.endTime)}</span>
+                        </div>
+                        <TaskCountdown startTime={task.startTime} endTime={task.endTime} />
+                      </>
                     )}
-                    <TaskCountdown startTime={task.startTime} endTime={task.endTime} />
                 </>
              )}
            </div>
