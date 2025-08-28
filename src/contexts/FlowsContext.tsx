@@ -15,7 +15,7 @@ interface FlowsContextType {
   updateFlow: (flowId: string, updates: Partial<Omit<Flow, 'id' | 'tasks'>>) => Promise<void>;
   deleteFlow: (flowId: string) => Promise<void>;
   getFlowById: (flowId: string) => Flow | undefined;
-  addTask: (flowId: string, taskTitle: string, taskDescription: string, startTime?: string, endTime?: string) => Promise<void>;
+  addTask: (flowId: string, taskTitle: string, taskDescription?: string, startTime?: string, endTime?: string) => Promise<void>;
   updateTask: (flowId: string, taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (flowId: string, taskId: string) => Promise<void>;
   reorderTasks: (flowId: string, sourceIndex: number, destinationIndex: number) => Promise<void>;
@@ -126,7 +126,7 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
     await updateDoc(flowRef, { tasks: updatedTasks });
   }, [user, flows]);
 
-  const addTask = useCallback(async (flowId: string, taskTitle: string, taskDescription: string, startTime?: string, endTime?: string) => {
+  const addTask = useCallback(async (flowId: string, taskTitle: string, taskDescription?: string, startTime?: string, endTime?: string) => {
     const newTask: Task = {
       id: doc(collection(db, `users/${user?.uid}/flows/${flowId}/tasks`)).id,
       title: taskTitle,
@@ -143,7 +143,7 @@ export function FlowsProvider({ children }: { children: ReactNode }) {
       tasks.map((task) => {
         if (task.id === taskId) {
           const updatedTask = { ...task, ...updates };
-           // Ensure undefined fields are handled correctly
+           // Ensure undefined fields are handled correctly by converting them to "delete" operations for firestore
           Object.keys(updatedTask).forEach(key => {
             const taskKey = key as keyof Partial<Task>;
             if (updatedTask[taskKey] === undefined) {

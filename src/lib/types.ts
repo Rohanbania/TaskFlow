@@ -2,7 +2,7 @@
 export interface Task {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   completedDates: string[]; // e.g., ["2024-07-29", "2024-07-30"]
   startTime?: string;
   endTime?: string;

@@ -13,15 +13,15 @@ export function TaskReportCard({
   task,
 }: TaskReportCardProps) {
   return (
-        <div className="p-6 rounded-2xl bg-white text-black shadow-2xl border border-gray-100 font-sans">
-            <div className="bg-white rounded-lg border">
+        <div className="p-6 rounded-2xl bg-background text-foreground shadow-2xl border border-border/50 font-sans">
+            <div className="bg-background rounded-lg border border-border">
                 <TaskCalendar task={task} />
             </div>
 
             {task.description && 
                 <div className='mt-6'>
-                    <h4 className="font-headline font-semibold mb-2 text-gray-700">Description</h4>
-                    <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border">{task.description}</p>
+                    <h4 className="font-headline font-semibold mb-2 text-foreground/80">Description</h4>
+                    <p className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg border border-border">{task.description}</p>
                 </div>
             }
         </div>

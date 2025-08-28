@@ -50,23 +50,24 @@ export function FlowPageContent({ id }: { id: string }) {
     const margin = 10;
     const contentWidth = pageWidth - margin * 2;
     
-    // Add Flow Title
     doc.setFontSize(22);
     doc.setTextColor(40, 40, 40);
-    doc.text(flow.title, margin, margin + 5);
+    const titleLines = doc.splitTextToSize(flow.title, contentWidth);
+    doc.text(titleLines, margin, margin + 5);
+    let yPosition = margin + 5 + (titleLines.length * 10);
 
-    let yPosition = margin + 20;
 
     for (let i = 0; i < flow.tasks.length; i++) {
         const reportCardElement = reportCardRefs.current[i];
 
         if (reportCardElement) {
             const canvas = await html2canvas(reportCardElement, { 
-              scale: 2, 
+              scale: 2,
+              useCORS: true,
               width: reportCardElement.offsetWidth,
-              windowWidth: reportCardElement.offsetWidth 
+              windowWidth: reportCardElement.offsetWidth,
             });
-            const imgData = canvas.toDataURL('image/jpeg', 0.98);
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
             
             const imgWidth = contentWidth;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -76,8 +77,8 @@ export function FlowPageContent({ id }: { id: string }) {
                 yPosition = margin;
                 doc.setFontSize(22);
                 doc.setTextColor(40, 40, 40);
-                doc.text(flow.title, margin, margin + 5);
-                yPosition = margin + 20;
+                doc.text(titleLines, margin, margin + 5);
+                yPosition = margin + 5 + (titleLines.length * 10);
             }
             
             doc.addImage(imgData, 'JPEG', margin, yPosition, imgWidth, imgHeight);
@@ -139,9 +140,9 @@ export function FlowPageContent({ id }: { id: string }) {
 
        {/* Hidden container for PDF export content */}
        <div className="light absolute left-[-9999px] top-0 -z-10" aria-hidden="true">
-         <div className="p-4">
+         <div className="p-4 bg-background">
              {flow.tasks.map((task, index) => (
-              <div key={task.id} ref={el => reportCardRefs.current[index] = el} className="mb-4" style={{width: '800px'}}>
+              <div key={task.id} ref={el => reportCardRefs.current[index] = el} className="mb-4" style={{width: '700px'}}>
                 <TaskReportCard task={task} />
               </div>
             ))}

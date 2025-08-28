@@ -51,7 +51,8 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
     toggleTaskCompletion(flowId, task.id);
   };
   
-  const formatTime = (timeStr: string) => {
+  const formatTime = (timeStr?: string) => {
+      if (!timeStr) return '';
       try {
         return format(parse(timeStr, 'HH:mm', new Date()), 'h:mm a');
       } catch (e) {

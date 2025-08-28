@@ -12,7 +12,6 @@ interface TaskCountdownProps {
   endTime?: string;
 }
 
-// Helper to parse HSL strings and get the values
 const parseHsl = (hslStr: string): [number, number, number] | null => {
     if (!hslStr) return null;
     const match = hslStr.match(/hsl\(([\d.]+) ([\d.]+)% ([\d.]+)%\)/);
@@ -41,10 +40,10 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
     const secondaryColorStr = computedStyle.getPropertyValue('--secondary').trim();
 
     const primaryHsl = parseHsl(primaryColorStr);
-    const destructiveHsl = parseHsl(destructiveColorStr) || [0, 84.2, 60.2]; // Fallback to default red
+    const destructiveHsl = parseHsl(destructiveColorStr) || [0, 84.2, 60.2];
     const secondaryHsl = parseHsl(secondaryColorStr);
     
-    const PRE_START_TRANSITION_SECONDS = 3600; // Start transitioning color 1 hour before start
+    const PRE_START_TRANSITION_SECONDS = 3600; // 1 hour
 
     const interval = setInterval(() => {
       if (!startTime || !endTime) {
@@ -66,8 +65,8 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
       if (isPending) {
         setStatus('pending');
         
-        if(secondaryHsl && primaryHsl && secondsToStart <= PRE_START_TRANSITION_SECONDS) {
-            const timeFraction = Math.max(0, PRE_START_TRANSITION_SECONDS - secondsToStart) / PRE_START_TRANSITION_SECONDS;
+        if(secondaryHsl && primaryHsl && secondsToStart > 0 && secondsToStart <= PRE_START_TRANSITION_SECONDS) {
+            const timeFraction = 1 - (secondsToStart / PRE_START_TRANSITION_SECONDS);
              const h = secondaryHsl[0] + (primaryHsl[0] - secondaryHsl[0]) * timeFraction;
              const s = secondaryHsl[1] + (primaryHsl[1] - secondaryHsl[1]) * timeFraction;
              const l = secondaryHsl[2] + (primaryHsl[2] - secondaryHsl[2]) * timeFraction;
@@ -89,12 +88,12 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
         setStatus('live');
         if (primaryHsl) {
             const totalDuration = differenceInMilliseconds(todayEndTime, todayStartTime);
-            const remainingTime = differenceInMilliseconds(todayEndTime, now);
-            const timeFraction = Math.max(0, remainingTime) / totalDuration;
+            const timeElapsed = differenceInMilliseconds(now, todayStartTime);
+            const timeFraction = Math.max(0, timeElapsed) / totalDuration;
             
-            const h = primaryHsl[0] - (primaryHsl[0] - destructiveHsl[0]) * (1 - timeFraction);
-            const s = primaryHsl[1] - (primaryHsl[1] - destructiveHsl[1]) * (1 - timeFraction);
-            const l = primaryHsl[2] - (primaryHsl[2] - destructiveHsl[2]) * (1 - timeFraction);
+            const h = primaryHsl[0] + (destructiveHsl[0] - primaryHsl[0]) * timeFraction;
+            const s = primaryHsl[1] + (destructiveHsl[1] - primaryHsl[1]) * timeFraction;
+            const l = primaryHsl[2] + (destructiveHsl[2] - primaryHsl[2]) * timeFraction;
 
             setDynamicStyle({ 
                 backgroundColor: `hsl(${h}, ${s}%, ${l}%)`,
@@ -140,7 +139,7 @@ export function TaskCountdown({ startTime, endTime }: TaskCountdownProps) {
     <Badge
       variant={getVariant()}
       className={cn(
-        'flex items-center gap-2 text-xs',
+        'flex items-center gap-2 text-xs transition-all',
          (status === 'live' || (status === 'pending' && dynamicStyle.backgroundColor)) && 'text-primary-foreground'
       )}
       style={dynamicStyle}

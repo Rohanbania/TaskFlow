@@ -14,6 +14,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +38,13 @@ const taskFormSchema = z.object({
   description: z.string().optional(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
+}).refine(data => {
+    if (data.startTime && !data.endTime) return false;
+    if (!data.startTime && data.endTime) return false;
+    return true;
+}, {
+    message: "Both start and end time must be provided",
+    path: ['startTime'],
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -65,31 +73,33 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
   });
 
   useEffect(() => {
-    if (task && open) {
-      form.reset({
-        title: task.title,
-        description: task.description,
-        startTime: task.startTime,
-        endTime: task.endTime,
-      });
-    } else if (!task && open) {
-       form.reset({
-        title: '',
-        description: '',
-        startTime: '',
-        endTime: '',
-      });
+    if (open) {
+        if (isEditMode && task) {
+             form.reset({
+                title: task.title,
+                description: task.description || '',
+                startTime: task.startTime || '',
+                endTime: task.endTime || '',
+            });
+        } else {
+             form.reset({
+                title: '',
+                description: '',
+                startTime: '',
+                endTime: '',
+            });
+        }
     }
-  }, [task, open, form]);
+  }, [task, open, form, isEditMode]);
 
   const handleFormSubmit = async (values: TaskFormValues) => {
     setIsSubmitting(true);
     try {
-        const taskData: Partial<Task> = {
+        const taskData = {
           title: values.title,
-          description: values.description || '',
-          startTime: values.startTime || '',
-          endTime: values.endTime || '',
+          description: values.description || undefined,
+          startTime: values.startTime || undefined,
+          endTime: values.endTime || undefined,
         };
         
         if (isEditMode && task) {
@@ -99,9 +109,9 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
           await addTask(
             flowId,
             values.title,
-            values.description || '',
-            values.startTime || '',
-            values.endTime || ''
+            values.description,
+            values.startTime,
+            values.endTime
           );
           toast({ title: 'Task Added', description: `"${values.title}" has been added to your flow.` });
         }
@@ -113,7 +123,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
         toast({
             variant: 'destructive',
             title: 'Error saving task',
-            description: 'Failed to save task. Please add all data.',
+            description: error.message || 'An unknown error occurred. Please try again.',
         });
     } finally {
         setIsSubmitting(false);
@@ -126,7 +136,6 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">{isEditMode ? 'Edit Task' : 'Add New Task'}</DialogTitle>
-
           <DialogDescription>
              {isEditMode ? "Update the details for your task below." : "Fill in the details for your new task below. Click save when you're done."}
           </DialogDescription>
@@ -165,7 +174,7 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                   </div>
                   
                   <div className="space-y-4">
-                     <h3 className="text-sm font-medium text-muted-foreground">Daily Time Window</h3>
+                     <h3 className="text-sm font-medium text-muted-foreground">Daily Time Window (Optional)</h3>
                       <div className="grid grid-cols-2 gap-4">
                          <FormField
                           control={form.control}
@@ -199,9 +208,11 @@ export function EditTaskDialog({ children, flowId, task }: EditTaskDialogProps) 
                 </div>
             </ScrollArea>
             <DialogFooter className="pt-6 border-t">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isSubmitting}>
-                Cancel
-              </Button>
+              <DialogClose asChild>
+                <Button type="button" variant="ghost" disabled={isSubmitting}>
+                  Cancel
+                </Button>
+              </DialogClose>
               <Button type="submit" disabled={isSubmitting}>
                  {isSubmitting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
