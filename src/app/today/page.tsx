@@ -94,7 +94,7 @@ export default function TodayPage() {
         {timedTasks.length > 0 ? (
            <div className="space-y-4">
             {timedTasks.map((task) => (
-                <div key={`${task.flowId}-${task.id}`} className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+                <div key={`${task.flowId}-${task.id}`} className="card-glow rounded-xl border border-border/60 bg-card p-4 shadow-sm">
                     <p className="mb-3 text-sm font-semibold text-muted-foreground">
                         From Flow: <Link href={`/flow/${task.flowId}`} className="text-primary hover:underline">{task.flowTitle}</Link>
                     </p>
