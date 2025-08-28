@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useContext, type DragEvent } from 'react';
@@ -62,8 +63,7 @@ export function TaskList({ flowId, tasks }: TaskListProps) {
           onDrop={(e) => handleDrop(e, task.id)}
           onDragEnd={handleDragEnd}
           className={cn(
-            'group relative flex cursor-grab items-start gap-2 rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-all duration-300 ease-in-out',
-            'hover:border-border hover:shadow-md',
+            'group card-glow relative flex cursor-grab items-start gap-2 rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-all duration-300 ease-in-out',
             'active:cursor-grabbing',
             draggedItemId === task.id ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
           )}
