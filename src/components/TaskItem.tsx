@@ -48,7 +48,9 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
   }, [task.completedDates]);
 
   const handleCheckedChange = () => {
-    toggleTaskCompletion(flowId, task.id);
+    if (flowId && task.id) {
+        toggleTaskCompletion(flowId, task.id);
+    }
   };
   
   const formatTime = (timeStr?: string) => {
@@ -69,13 +71,15 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
           onCheckedChange={handleCheckedChange}
           className="mt-1 h-5 w-5 flex-shrink-0 rounded-md"
           aria-labelledby={`task-title-${task.id}`}
+          disabled={!flowId}
         />
         <div className="grid gap-1.5 flex-1">
           <label
             id={`task-title-${task.id}`}
             htmlFor={`task-${task.id}`}
             className={cn(
-              'font-medium transition-colors cursor-pointer',
+              'font-medium transition-colors',
+              flowId ? 'cursor-pointer' : 'cursor-default',
               isCompletedToday ? 'text-muted-foreground line-through' : 'text-card-foreground'
             )}
           >
@@ -124,7 +128,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
         task={task}
       />
 
-      <AlertDialog>
+    {flowId && <AlertDialog>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
@@ -173,7 +177,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </div>
   );
 }

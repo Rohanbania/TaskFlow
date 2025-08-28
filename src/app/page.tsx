@@ -3,7 +3,7 @@
 
 import { useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BookMarked, Plus, LayoutGrid, Bell, X, LogIn, CheckCircle } from 'lucide-react';
+import { BookMarked, Plus, LayoutGrid, Bell, X, LogIn, CheckCircle, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CreateFlowDialog } from '@/components/CreateFlowDialog';
 import { FlowCard } from '@/components/FlowCard';
@@ -35,7 +35,7 @@ export default function Home() {
 
   const handleRequestPermission = () => {
     Notification.requestPermission().then((permission) => {
-      setNotificationPermission(permission);
+      setNotificationpermission(permission);
       setShowPermissionBanner(false);
     });
   };
@@ -112,12 +112,22 @@ export default function Home() {
           </Link>
           <div className="flex items-center gap-2">
             <ThemeSwitcher />
-             {user && <CreateFlowDialog>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Flow
+             {user && (
+                <>
+                <Button variant="outline" asChild>
+                    <Link href="/today">
+                        <CalendarClock className="mr-2 h-4 w-4" />
+                        Today's Schedule
+                    </Link>
                 </Button>
-            </CreateFlowDialog>}
+                <CreateFlowDialog>
+                    <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Flow
+                    </Button>
+                </CreateFlowDialog>
+                </>
+             )}
             {user ? <UserNav /> : (
               !loading && (
                 <Button onClick={signInWithGoogle}>
