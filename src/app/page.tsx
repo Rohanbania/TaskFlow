@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useContext, useEffect, useState } from 'react';
@@ -12,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { AuthContext } from '@/contexts/AuthContext';
 import { UserNav } from '@/components/UserNav';
+import { useTaskNotifications } from '@/hooks/use-task-notifications';
 
 export default function Home() {
   const { user, loading: authLoading, signInWithGoogle } = useContext(AuthContext);
@@ -19,6 +21,8 @@ export default function Home() {
   const [notificationPermission, setNotificationPermission] = useState('default');
   const [showPermissionBanner, setShowPermissionBanner] = useState(false);
   const loading = authLoading || flowsLoading;
+
+  useTaskNotifications(flows);
 
   useEffect(() => {
     if ('Notification' in window) {
