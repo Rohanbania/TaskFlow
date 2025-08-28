@@ -15,6 +15,7 @@ import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { AuthContext } from '@/contexts/AuthContext';
 import { UserNav } from '@/components/UserNav';
 import { useTaskNotifications } from '@/hooks/use-task-notifications';
+import { PageTransition } from '@/components/PageTransition';
 
 const MIN_SWIPE_DISTANCE = 50;
 
@@ -105,9 +106,6 @@ export default function Home() {
       return (
         <div 
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
         >
           {flows.map((flow) => (
             <FlowCard key={flow.id} flow={flow} />
@@ -136,7 +134,8 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <PageTransition>
+    <div className="min-h-screen" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       <header className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
@@ -205,5 +204,6 @@ export default function Home() {
         {renderContent()}
       </main>
     </div>
+    </PageTransition>
   );
 }

@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useState, type TouchEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, CalendarClock, Info } from 'lucide-react';
 import { FlowsContext } from '@/contexts/FlowsContext';
 import { TaskItem } from '@/components/TaskItem';
@@ -11,7 +12,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { parse } from 'date-fns';
 import type { Task, Flow } from '@/lib/types';
+import { PageTransition } from '@/components/PageTransition';
 
+const MIN_SWIPE_DISTANCE = 50;
 
 interface TaskWithFlowInfo extends Task {
     flowId: string;
@@ -20,6 +23,10 @@ interface TaskWithFlowInfo extends Task {
 
 export default function TodayPage() {
   const { flows, loading } = useContext(FlowsContext);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const router = useRouter();
+
 
   const timedTasks = useMemo(() => {
     const allTasks: TaskWithFlowInfo[] = [];
@@ -39,12 +46,36 @@ export default function TodayPage() {
     });
   }, [flows]);
   
+  const onTouchStart = (e: TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
+
+    if (isRightSwipe) {
+      router.push('/');
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+
   if (loading) {
     return <PageSkeleton />;
   }
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8 md:px-6">
+    <PageTransition>
+    <div className="container mx-auto max-w-4xl px-4 py-8 md:px-6" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
        <header className="mb-8">
         <Button variant="ghost" asChild className="mb-4 -ml-4">
           <Link href="/">
@@ -82,6 +113,7 @@ export default function TodayPage() {
         )}
       </main>
     </div>
+    </PageTransition>
   );
 }
 
