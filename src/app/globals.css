@@ -63,11 +63,17 @@
 @layer utilities {
   .card-glow {
     @apply relative overflow-visible;
-    transition: all 0.3s ease-in-out;
+    transition: all 0.4s ease-in-out;
+    box-shadow: 
+      8px -8px 20px -10px hsl(var(--primary) / 0.3), 
+      -8px 8px 20px -10px hsl(var(--primary) / 0);
   }
 
-  .card-glow:hover {
-     box-shadow: 0px 10px 30px -10px hsl(var(--primary) / 0.3);
-     transform: translateY(-4px);
+  .card-glow:hover, .card-glow:active {
+     transform: translateY(2px) translateX(-2px);
+     box-shadow: 
+      8px -8px 20px -10px hsl(var(--primary) / 0), 
+      -8px 8px 20px -10px hsl(var(--primary) / 0.3);
   }
 }
+
