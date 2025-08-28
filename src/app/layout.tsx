@@ -5,6 +5,17 @@ import { FlowsProvider } from '@/contexts/FlowsContext';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { Inter, Manrope } from 'next/font/google';
+
+const fontBody = Inter({
+  subsets: ['latin'],
+  variable: '--font-body',
+});
+
+const fontHeadline = Manrope({
+  subsets: ['latin'],
+  variable: '--font-headline',
+});
 
 export const metadata: Metadata = {
   title: 'TaskFlow',
@@ -21,18 +32,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
- <link rel="icon" href="/download.png" sizes="any" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;700&family=Poppins:wght@400;600;700&display=swap"
-          rel="stylesheet"
-        />
+        <link rel="icon" href="/download.png" sizes="any" />
       </head>
       <body
         className={cn(
           'font-body antialiased',
-          'bg-background text-foreground'
+          'bg-background text-foreground',
+          fontBody.variable,
+          fontHeadline.variable
         )}
       >
         <NextThemesProvider

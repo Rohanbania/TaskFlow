@@ -67,7 +67,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
           id={`task-${task.id}`}
           checked={isCompletedToday}
           onCheckedChange={handleCheckedChange}
-          className="mt-1 h-5 w-5 flex-shrink-0"
+          className="mt-1 h-5 w-5 flex-shrink-0 rounded-md"
           aria-labelledby={`task-title-${task.id}`}
         />
         <div className="grid gap-1.5 flex-1">
@@ -75,7 +75,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
             id={`task-title-${task.id}`}
             htmlFor={`task-${task.id}`}
             className={cn(
-              'font-medium transition-colors',
+              'font-medium transition-colors cursor-pointer',
               isCompletedToday ? 'text-muted-foreground line-through' : 'text-card-foreground'
             )}
           >
@@ -91,7 +91,7 @@ export function TaskItem({ flowId, task }: TaskItemProps) {
           )}
            <div className='flex flex-wrap items-center gap-x-4 gap-y-2 mt-1'>
              {isCompletedToday ? (
-                <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                <Badge variant="outline" className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
                     <CheckCircle2 className="mr-1.5 h-3 w-3" />
                     Task Completed
                 </Badge>

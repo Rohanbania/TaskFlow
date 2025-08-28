@@ -105,7 +105,7 @@ export function FlowPageContent({ id }: { id: string }) {
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8 md:px-6">
       <header className="mb-8">
-        <Button variant="ghost" asChild className="mb-4">
+        <Button variant="ghost" asChild className="mb-4 -ml-4">
           <Link href="/">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Flows
@@ -130,8 +130,8 @@ export function FlowPageContent({ id }: { id: string }) {
 
       <main>
         <div>
-           <div className="mb-6 flex items-center gap-2">
-              <ClipboardList className="h-6 w-6 text-muted-foreground" />
+           <div className="mb-6 flex items-center gap-3">
+              <ClipboardList className="h-7 w-7 text-muted-foreground" />
               <h2 className="text-2xl font-semibold font-headline">Tasks</h2>
             </div>
             <TaskList flowId={flow.id} tasks={flow.tasks} />

@@ -3,7 +3,7 @@
 
 import { useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BookMarked, Plus, LayoutGrid, Bell, X, LogIn } from 'lucide-react';
+import { BookMarked, Plus, LayoutGrid, Bell, X, LogIn, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CreateFlowDialog } from '@/components/CreateFlowDialog';
 import { FlowCard } from '@/components/FlowCard';
@@ -57,9 +57,12 @@ export default function Home() {
     
     if (!user) {
        return (
-         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card p-12 text-center">
-            <h2 className="mb-2 text-xl font-semibold font-headline">Welcome to TaskFlow</h2>
-            <p className="mb-4 max-w-sm text-muted-foreground">
+         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card p-12 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <LogIn className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="mb-2 text-xl font-bold font-headline">Welcome to TaskFlow</h2>
+            <p className="mb-6 max-w-sm text-muted-foreground">
               Sign in with your Google account to start creating your personalized task flows.
             </p>
             <Button onClick={signInWithGoogle}>
@@ -81,9 +84,12 @@ export default function Home() {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card p-12 text-center">
-        <h2 className="mb-2 text-xl font-semibold font-headline">No Flows Yet</h2>
-        <p className="mb-4 max-w-sm text-muted-foreground">
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card p-12 text-center">
+         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <CheckCircle className="h-8 w-8 text-primary" />
+        </div>
+        <h2 className="mb-2 text-xl font-bold font-headline">No Flows Yet</h2>
+        <p className="mb-6 max-w-sm text-muted-foreground">
             It looks like you haven't created any flows. Get started by creating a new one.
         </p>
         <CreateFlowDialog>
@@ -98,7 +104,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
             <BookMarked className="h-6 w-6 text-primary" />
@@ -107,14 +113,14 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <ThemeSwitcher />
              {user && <CreateFlowDialog>
-                <Button size="sm">
+                <Button>
                     <Plus className="mr-2 h-4 w-4" />
                     New Flow
                 </Button>
             </CreateFlowDialog>}
             {user ? <UserNav /> : (
               !loading && (
-                <Button onClick={signInWithGoogle} size="sm">
+                <Button onClick={signInWithGoogle}>
                   <LogIn className="mr-2 h-4 w-4" />
                   Sign In
                 </Button>
@@ -146,9 +152,11 @@ export default function Home() {
         )}
         
         {user && 
-         <div className="mb-8 flex items-center gap-2">
-          <LayoutGrid className="h-6 w-6 text-muted-foreground" />
-          <h1 className="text-3xl font-bold font-headline">Your Flows</h1>
+         <div className="mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+             <LayoutGrid className="h-7 w-7 text-muted-foreground" />
+             <h1 className="text-3xl font-bold font-headline">Your Flows</h1>
+            </div>
         </div>}
 
         {renderContent()}

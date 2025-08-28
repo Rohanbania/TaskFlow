@@ -44,9 +44,9 @@ export function TaskList({ flowId, tasks }: TaskListProps) {
 
   if (tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card p-12 text-center">
+      <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card p-12 text-center">
         <h3 className="text-lg font-semibold font-headline">No tasks yet!</h3>
-        <p className="text-muted-foreground">Add a new task to get your flow started.</p>
+        <p className="mt-2 text-muted-foreground">Add a new task to get your flow started.</p>
       </div>
     );
   }
@@ -62,9 +62,10 @@ export function TaskList({ flowId, tasks }: TaskListProps) {
           onDrop={(e) => handleDrop(e, task.id)}
           onDragEnd={handleDragEnd}
           className={cn(
-            'card-glow group relative flex cursor-grab items-start gap-2 rounded-lg bg-card p-4 shadow-sm',
+            'group relative flex cursor-grab items-start gap-2 rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-all duration-300 ease-in-out',
+            'hover:border-border hover:shadow-md',
             'active:cursor-grabbing',
-            draggedItemId === task.id ? 'opacity-50' : 'opacity-100'
+            draggedItemId === task.id ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
           )}
         >
           <GripVertical className="mt-1 h-5 w-5 flex-shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
