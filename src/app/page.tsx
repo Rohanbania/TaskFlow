@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, type TouchEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BookMarked, Plus, LayoutGrid, Bell, X, LogIn, CheckCircle, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CreateFlowDialog } from '@/components/CreateFlowDialog';
@@ -15,11 +16,16 @@ import { AuthContext } from '@/contexts/AuthContext';
 import { UserNav } from '@/components/UserNav';
 import { useTaskNotifications } from '@/hooks/use-task-notifications';
 
+const MIN_SWIPE_DISTANCE = 50;
+
 export default function Home() {
   const { user, loading: authLoading, signInWithGoogle } = useContext(AuthContext);
   const { flows, loading: flowsLoading } = useContext(FlowsContext);
   const [notificationPermission, setNotificationPermission] = useState('default');
   const [showPermissionBanner, setShowPermissionBanner] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const router = useRouter();
   const loading = authLoading || flowsLoading;
 
   useTaskNotifications(flows);
@@ -35,7 +41,7 @@ export default function Home() {
 
   const handleRequestPermission = () => {
     Notification.requestPermission().then((permission) => {
-      setNotificationpermission(permission);
+      setNotificationPermission(permission);
       setShowPermissionBanner(false);
     });
   };
@@ -43,6 +49,28 @@ export default function Home() {
   const handleDismissBanner = () => {
     setShowPermissionBanner(false);
   }
+
+  const onTouchStart = (e: TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
+
+    if (isLeftSwipe) {
+      router.push('/today');
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   const renderContent = () => {
     if (loading) {
@@ -75,7 +103,12 @@ export default function Home() {
 
     if (flows.length > 0) {
       return (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div 
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           {flows.map((flow) => (
             <FlowCard key={flow.id} flow={flow} />
           ))}
@@ -114,12 +147,6 @@ export default function Home() {
             <ThemeSwitcher />
              {user && (
                 <>
-                <Button variant="outline" asChild>
-                    <Link href="/today">
-                        <CalendarClock className="mr-2 h-4 w-4" />
-                        Today's Schedule
-                    </Link>
-                </Button>
                 <CreateFlowDialog>
                     <Button>
                         <Plus className="mr-2 h-4 w-4" />
@@ -162,11 +189,17 @@ export default function Home() {
         )}
         
         {user && 
-         <div className="mb-8 flex items-center justify-between">
+         <div className="mb-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
              <LayoutGrid className="h-7 w-7 text-muted-foreground" />
              <h1 className="text-3xl font-bold font-headline">Your Flows</h1>
             </div>
+            <Button variant="outline" asChild>
+                <Link href="/today">
+                    <CalendarClock className="mr-2 h-4 w-4" />
+                    Today's Schedule
+                </Link>
+            </Button>
         </div>}
 
         {renderContent()}
